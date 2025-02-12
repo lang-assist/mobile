@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:collection';
 import 'package:api/api.dart';
+import 'package:assist_app/src/controllers/path.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:http/http.dart';
 import 'package:sign_flutter/sign_flutter.dart';
 import 'package:user_data/user_data.dart';
-import 'package:just_audio/just_audio.dart';
 
 enum ConversationState { none, waiting, active, done, error }
 
@@ -17,42 +18,41 @@ class AudioState extends Signal<bool> {
     : super(true);
 }
 
-// Feed your own stream of bytes into the player
-class BytesSource extends StreamAudioSource {
-  final Uint8List bytes;
-  BytesSource(this.bytes);
-
-  @override
-  Future<StreamAudioResponse> request([int? start, int? end]) async {
-    start ??= 0;
-    end ??= bytes.length;
-    return StreamAudioResponse(
-      sourceLength: bytes.length,
-      contentLength: end - start,
-      offset: start,
-      stream: Stream.value(bytes.sublist(start, end)),
-      contentType: 'audio/wav',
-    );
-  }
-}
-
 class ConversationController {
-  final Fragment$DetailedMaterial material;
+  MaterialController _material;
 
-  ConversationController(this.material) {
+  MaterialController get material => _material;
+
+  ConversationController(this._material) {
     _listenPlayerState();
-    if (material.turns.items.isNotEmpty) {
-      for (final turn in material.turns.items) {
+    if (_material.turns.isNotEmpty) {
+      for (final turn in _material.turns) {
         _fetchAudio(turn: turn);
       }
     }
+  }
+
+  Future<bool> refetchIfNeeded() async {
+    if (isCompleted || isEnded) {
+      return false;
+    }
+    if (material.turns.isEmpty) {
+      await material.refetch();
+
+      for (final turn in material.turns) {
+        _fetchAudio(turn: turn);
+      }
+      return true;
+    }
+
+    return false;
   }
 
   Fragment$ConversationDetails get conversation =>
       material.details as Fragment$ConversationDetails;
 
   late final SignalList<Fragment$ConversationTurn> turns = SignalList([
-    ...material.turns.items.reversed,
+    ...material.turns.reversed,
   ]);
 
   late final AudioPlayer player = AudioPlayer();
@@ -74,6 +74,8 @@ class ConversationController {
   bool isTurnPlaying(String turnId) => playingTurnId.value == turnId;
 
   Future<void> playTurn(String turnId) async {
+    BytesSource source;
+
     try {
       playingTurnId.value = turnId;
       final turn = turns.firstWhere((turn) => turn.id == turnId);
@@ -88,7 +90,7 @@ class ConversationController {
         if (bytes == null) {
           return;
         }
-        await player.setAudioSource(BytesSource(bytes));
+        source = BytesSource(bytes);
       } else {
         _whenEndPlaying(turnId);
         return;
@@ -96,7 +98,7 @@ class ConversationController {
 
       _onEndPlayingCompleter = Completer<void>();
 
-      await player.play();
+      await player.play(source);
 
       await _onEndPlayingCompleter?.future;
 
@@ -108,24 +110,32 @@ class ConversationController {
 
   Signal<double> progress = Signal<double>(0);
 
+  Duration? duration;
+
   _listenPlayerState() {
-    final subscription = player.playerStateStream.listen((state) {
-      if (state.processingState == ProcessingState.completed) {
+    final subscription = player.onPlayerStateChanged.listen((state) {
+      if (state == PlayerState.completed) {
         if (_onEndPlayingCompleter != null) {
           _onEndPlayingCompleter?.complete();
           _onEndPlayingCompleter = null;
         }
       }
     });
-    final sub2 = player.positionStream.listen((position) {
-      if (player.duration != null) {
-        progress.value =
-            position.inMilliseconds / player.duration!.inMilliseconds;
+
+    final sub2 = player.onDurationChanged.listen((duration) {
+      this.duration = duration;
+    });
+
+    final sub3 = player.onPositionChanged.listen((position) {
+      if (duration != null) {
+        progress.value = position.inMilliseconds / duration!.inMilliseconds;
       }
     });
+
     subscription.onDone(() {
       subscription.cancel();
       sub2.cancel();
+      sub3.cancel();
     });
   }
 
@@ -170,7 +180,6 @@ class ConversationController {
   bool get isCompleted => _isCompleted;
 
   Future<void> listen() async {
-    print("LISTENING ${isCompleted} ${isEnded}");
     if (isCompleted || isEnded) {
       return;
     }
@@ -188,7 +197,7 @@ class ConversationController {
     _subscription = _stream?.listen((event) {
       if (state.value == ConversationState.waiting) {
         state.value = ConversationState.active;
-        print("STREAM LISTENING");
+
         completer.complete();
       }
 

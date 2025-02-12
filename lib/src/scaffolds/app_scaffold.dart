@@ -1,3 +1,4 @@
+import 'package:assist_app/src/controllers/journey.dart';
 import 'package:assist_utils/assist_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -56,8 +57,11 @@ class _UserScaffoldState extends State<UserScaffold>
     MenuItem(
       title: 'Ana Sayfa',
       icon: Icons.home_outlined,
-      isSelected: isSelected('/'),
-      onTap: () => context.go('/'),
+      isSelected: isSelected('/journeys'),
+      onTap: () {
+        journeyController.clearJourney();
+        context.go('/journeys');
+      },
     ),
     MenuItem(
       title: 'Üyeler',
@@ -92,7 +96,7 @@ class _UserScaffoldState extends State<UserScaffold>
         const SizedBox(height: AppSpacing.md),
         Text(
           user.name,
-          style: AppTypography.titleMedium.copyWith(
+          style: typo.titleMedium.copyWith(
             fontWeight: FontWeight.w600,
             color: Colors.white,
           ),
@@ -110,14 +114,17 @@ class _UserScaffoldState extends State<UserScaffold>
 
   Fragment$PublicUser get user => AuthController().user;
 
+  late final canPop = context.canPop();
+
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
       title: widget.title,
       body: widget.body,
-      showDrawer: false,
+      showDrawer: true,
+      menuItems: menuItems,
       onBackPressed:
-          widget.showBackButton && context.canPop()
+          widget.showBackButton && canPop
               ? () {
                 context.pop();
               }
@@ -125,7 +132,41 @@ class _UserScaffoldState extends State<UserScaffold>
       actions: [
         ...?widget.actions,
         if (AuthController().isAuthenticated)
-          ImggenUserAvatar(avatar: user.avatar, size: 24),
+          PopupIconButton(
+            icon: ImggenUserAvatar(avatar: user.avatar, size: 24),
+            menuDecoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            items: [
+              AppButton(
+                variant: AppButtonVariant.primary,
+                prefixIcon: Icon(Icons.book_outlined),
+                onPressed: () {},
+                title: Text("Documentation"),
+              ),
+              AppButton(
+                variant: AppButtonVariant.primary,
+                prefixIcon: Icon(Icons.book_outlined),
+                onPressed: () {},
+                title: Text("Dictionary"),
+              ),
+              AppButton(
+                variant: AppButtonVariant.outlined,
+                prefixIcon: Icon(Icons.settings_outlined),
+                onPressed: () {},
+                title: Text("Settings"),
+              ),
+              AppButton(
+                variant: AppButtonVariant.danger,
+                prefixIcon: Icon(Icons.exit_to_app_outlined),
+                onPressed: () {
+                  AuthController().logout();
+                },
+                title: Text("Çıkış Yap"),
+              ),
+            ],
+          ),
       ],
     );
   }

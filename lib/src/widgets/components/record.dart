@@ -1,6 +1,9 @@
-import 'dart:io';
+import 'dart:async';
+import 'dart:math';
+import 'package:assist_app/src/utils/audio_fetch/audio_fetch.dart';
+import 'package:assist_utils/assist_utils.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
@@ -10,11 +13,26 @@ class RecordWidget extends StatefulWidget {
     this.maxDuration,
     this.minDuration,
     required this.onRecordComplete,
+    this.onRecordCancel,
+    this.record,
+    this.onRecordStart,
+    this.onAmplitudeChanged,
+    this.onCancellingStateChanged,
+    this.size = 80,
+    this.filled = false,
   });
 
   final Duration? maxDuration;
   final Duration? minDuration;
-  final void Function(String path) onRecordComplete;
+  final double size;
+  final void Function(Uint8List? data) onRecordComplete;
+  final void Function(bool cancelling)? onCancellingStateChanged;
+  final void Function()? onRecordCancel;
+  final void Function()? onRecordStart;
+  final void Function(Amplitude)? onAmplitudeChanged;
+
+  final AudioRecorder? record;
+  final bool filled;
 
   @override
   State<RecordWidget> createState() => _RecordWidgetState();
@@ -22,130 +40,177 @@ class RecordWidget extends StatefulWidget {
 
 class _RecordWidgetState extends State<RecordWidget>
     with SingleTickerProviderStateMixin {
-  final _audioRecorder = AudioRecorder();
-  bool _isRecording = false;
-  String? _path;
-  DateTime? _startTime;
+  late AudioRecorder recorder = widget.record ?? AudioRecorder();
 
-  late final AnimationController _progressController;
+  StreamSubscription<Amplitude>? _subscription;
+
+  bool cancelling = false;
+  bool recording = false;
 
   @override
   void initState() {
     super.initState();
-    _progressController = AnimationController(
-      vsync: this,
-      duration: widget.maxDuration ?? const Duration(minutes: 1),
-    );
-
     _initRecorder();
   }
 
   Future<void> _initRecorder() async {
-    final hasPermission = await _audioRecorder.hasPermission();
+    final hasPermission = await recorder.hasPermission();
     if (!hasPermission) {
       throw Exception('Microphone permission not granted');
     }
   }
 
-  Future<void> _startRecording() async {
-    try {
-      final tempDir = await getTemporaryDirectory();
-      _path =
-          '${tempDir.path}/record_${DateTime.now().millisecondsSinceEpoch}.wav';
-
-      await _audioRecorder.start(
-        RecordConfig(
-          encoder: AudioEncoder.wav,
-          bitRate: 128000,
-          sampleRate: 44100,
-        ),
-        path: _path!,
-      );
-
-      setState(() {
-        _isRecording = true;
-        _startTime = DateTime.now();
-      });
-
-      _progressController.forward();
-      HapticFeedback.heavyImpact();
-    } catch (e) {
-      print('Error starting recording: $e');
-    }
+  setCancelling(bool cancelling) {
+    this.cancelling = cancelling;
+    widget.onCancellingStateChanged?.call(cancelling);
   }
 
-  Future<void> _stopRecording() async {
-    try {
-      final path = await _audioRecorder.stop();
-      final now = DateTime.now();
-      final duration = now.difference(_startTime!);
+  setRecording(bool recording) {
+    this.recording = recording;
+    widget.onRecordStart?.call();
+  }
 
-      setState(() {
-        _isRecording = false;
-        _startTime = null;
-      });
+  Future<Uint8List?> stopRecording() async {
+    final path = await recorder.stop();
 
-      _progressController.reset();
+    setRecording(false);
+    setCancelling(false);
+    setState(() {});
 
-      if (path != null) {
-        if (widget.minDuration != null && duration < widget.minDuration!) {
-          // Delete the file if recording is too short
-          File(path).deleteSync();
-          return;
-        }
-        widget.onRecordComplete(path);
-      }
-    } catch (e) {
-      print('Error stopping recording: $e');
+    _subscription?.cancel();
+    _subscription = null;
+
+    if (path == null) {
+      return null;
     }
+
+    Uint8List buffer;
+
+    buffer = await fetchAudio(path);
+
+    widget.onRecordComplete(buffer);
+
+    return buffer;
+
+    // if (res == null) {
+    //   throw Exception("Recording failed");
+    // }
+
+    // if (kIsWeb) {
+    //   final blobRes = await get(Uri.parse(res));
+    //   if (blobRes.statusCode != 200) {
+    //     throw Exception("Recording failed: ${blobRes.statusCode}");
+    //   }
+    //   print("Recording blob: ${blobRes.bodyBytes.length}");
+    //   return blobRes.bodyBytes;
+    // } else {
+    //   final path = (await getTemporaryDirectory()).path;
+    //   final p = "$path/$res";
+    //   throw Exception("Recording failed: $p");
+    // }
+  }
+
+  Future<void> startRecording() async {
+    if (await recorder.isRecording()) {
+      await cancelRecording();
+    }
+
+    setRecording(true);
+    setCancelling(false);
+    widget.onRecordStart?.call();
+    setState(() {});
+
+    if (widget.onAmplitudeChanged != null) {
+      _subscription = recorder
+          .onAmplitudeChanged(Duration(milliseconds: 16))
+          .listen((amplitude) {
+            widget.onAmplitudeChanged?.call(amplitude);
+          });
+    }
+
+    String path;
+
+    if (kIsWeb) {
+      path = "";
+    } else {
+      path =
+          "${(await getTemporaryDirectory()).path}/${Random().nextInt(1000000)}.wav";
+    }
+
+    recorder.start(
+      RecordConfig(
+        encoder: AudioEncoder.wav,
+        sampleRate: 16000,
+        numChannels: 1,
+      ),
+      path: path,
+    );
+
+    setState(() {});
+  }
+
+  Future<void> cancelRecording() async {
+    setRecording(false);
+    setCancelling(false);
+    widget.onRecordCancel?.call();
+    setState(() {});
+    if (await recorder.isRecording()) {
+      await recorder.stop();
+    }
+
+    _subscription?.cancel();
+    _subscription = null;
   }
 
   @override
   void dispose() {
-    _audioRecorder.dispose();
-    _progressController.dispose();
+    recorder.dispose();
+    if (_subscription != null) {
+      _subscription?.cancel();
+      _subscription = null;
+    }
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: GestureDetector(
-        onTapDown: (_) => _startRecording(),
-        onTapUp: (_) => _stopRecording(),
-        onTapCancel: _stopRecording,
-        child: AnimatedBuilder(
-          animation: _progressController,
-          builder: (context, child) {
-            return Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _isRecording ? Colors.red : Colors.blue,
-                border: Border.all(color: Colors.white, width: 4),
-              ),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  if (_isRecording)
-                    CircularProgressIndicator(
-                      value: _progressController.value,
-                      valueColor: const AlwaysStoppedAnimation(Colors.white),
-                      strokeWidth: 4,
-                    ),
-                  Center(
-                    child: Icon(
-                      _isRecording ? Icons.mic : Icons.mic_none,
-                      color: Colors.white,
-                      size: 32,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
+      child: AppButton(
+        onPressed: () {},
+        customBackgroundDecoration:
+            widget.filled
+                ? BoxDecoration(
+                  borderRadius: BorderRadius.circular(800),
+                  color: AppColors.primary,
+                )
+                : null,
+        variant:
+            widget.filled ? AppButtonVariant.primary : AppButtonVariant.text,
+        size: AppSizeVariant.large,
+        onTapUp: (details) async {
+          cancelRecording();
+        },
+
+        onTapDown: (details) async {
+          startRecording();
+        },
+        onTapCancel: () {
+          if (cancelling) {
+            cancelRecording();
+          } else {
+            stopRecording();
+          }
+        },
+        onCancelling: (cancelling) {
+          this.cancelling = cancelling;
+        },
+        title:
+            recording
+                ? cancelling
+                    ? Icon(Icons.cabin, size: widget.size)
+                    : Icon(Icons.stop, size: widget.size)
+                : Icon(Icons.mic, size: widget.size),
       ),
     );
   }

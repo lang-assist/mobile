@@ -9,17 +9,21 @@ class GoogleSignInButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppButton(
+      variant: AppButtonVariant.outlined,
       onPressed: () {},
       title: Row(
         spacing: 8,
         children: [
-          ImgGenIcons.name(ImgGenIconNames.google),
-          const Text("Continue With Google"),
+          ImgGenIcons.name(
+            ImgGenIconNames.google,
+            size: 24,
+            color: AppColors.primary,
+          ),
+          Text(
+            "Continue With Google",
+            style: TextStyle(color: AppColors.primary),
+          ),
         ],
-      ),
-      customBackgroundDecoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(1000.0),
       ),
     );
   }
@@ -31,26 +35,25 @@ class AppleSignInButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppButton(
+      variant: AppButtonVariant.outlined,
       onPressed: () {},
       title: Row(
         spacing: 8,
         children: [
-          ImgGenIcons.name(ImgGenIconNames.apple),
-          const Text("Continue With Apple"),
+          ImgGenIcons.name(
+            ImgGenIconNames.apple,
+            size: 24,
+            color: AppColors.primary,
+          ),
+          Text(
+            "Continue With Apple",
+            style: TextStyle(color: AppColors.primary),
+          ),
         ],
-      ),
-      customBackgroundDecoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(1000.0),
       ),
       customTextStyle: TextTheme.of(
         context,
-      ).bodyLarge!.copyWith(color: AppColors.background.op(1)),
-      customIconSize: 30.0,
-      customIconTheme: const IconThemeData(
-        color: AppColors.background,
-        size: 24.0,
-      ),
+      ).bodyLarge!.copyWith(color: AppColors.surface.op(1)),
     );
   }
 }
@@ -60,32 +63,38 @@ class SocialMediaIcons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      spacing: 16,
-      children: [
-        const GoogleSignInButton(),
-        const AppleSignInButton(),
-        AppButton(
-          onPressed: () async {
-            // await Get.toNamed(RouteNames.signUpWithMailScreen,
-            //     parameters: Get.parameters as Map<String, String>?);
-            // Get.back();
-            await Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const SignUpWithMailScreen(),
+    return Padding(
+      padding: const EdgeInsets.all(AppDimensions.spacing4),
+      child: Column(
+        spacing: AppDimensions.spacing4,
+        children: [
+          SizedBox(width: double.infinity, child: const GoogleSignInButton()),
+          SizedBox(width: double.infinity, child: const AppleSignInButton()),
+          SizedBox(
+            width: double.infinity,
+            child: AppButton(
+              onPressed: () async {
+                // await Get.toNamed(RouteNames.signUpWithMailScreen,
+                //     parameters: Get.parameters as Map<String, String>?);
+                // Get.back();
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const SignUpWithMailScreen(),
+                  ),
+                );
+                if (context.mounted) context.go("/");
+              },
+              title: Row(
+                spacing: 8,
+                children: [
+                  ImgGenIcons.name(ImgGenIconNames.email),
+                  const Text("Continue With Email"),
+                ],
               ),
-            );
-            if (context.mounted) context.go("/");
-          },
-          title: Row(
-            spacing: 8,
-            children: [
-              ImgGenIcons.name(ImgGenIconNames.email),
-              const Text("Continue With Email"),
-            ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

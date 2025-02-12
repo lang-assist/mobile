@@ -1,16 +1,17 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:api/api.dart';
 import 'package:assist_app/src/controllers/conversation.dart';
+import 'package:assist_app/src/controllers/path.dart';
 import 'package:assist_app/src/utils/auth.dart';
 import 'package:assist_app/src/widgets/audio_player.dart';
+import 'package:assist_app/src/widgets/components/record.dart';
 import 'package:assist_app/widgets.dart';
 import 'package:assist_utils/assist_utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:http/http.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:sign_flutter/sign_flutter.dart';
 import 'package:user_data/user_data.dart';
@@ -18,13 +19,11 @@ import 'package:user_data/user_data.dart';
 class ConversationBuilder extends StatefulWidget {
   const ConversationBuilder({
     super.key,
-    required this.conversation,
     required this.material,
     required this.onSubmit,
   });
 
-  final Fragment$DetailedMaterial material;
-  final Fragment$ConversationDetails conversation;
+  final MaterialController material;
   final Future<void> Function() onSubmit;
 
   @override
@@ -34,7 +33,9 @@ class ConversationBuilder extends StatefulWidget {
 class _ConversationBuilderState extends State<ConversationBuilder> {
   @override
   void initState() {
-    // controller.listen();
+    controller.refetchIfNeeded().then((value) {
+      controller.listen();
+    });
     super.initState();
   }
 
@@ -47,6 +48,9 @@ class _ConversationBuilderState extends State<ConversationBuilder> {
   late final controller = ConversationController(widget.material);
   final scrollController = ScrollController();
 
+  Fragment$ConversationDetails get conversation =>
+      widget.material.details as Fragment$ConversationDetails;
+
   @override
   Widget build(BuildContext context) {
     return ConversationPlayerProvider(
@@ -58,148 +62,105 @@ class _ConversationBuilderState extends State<ConversationBuilder> {
               child: SingleChildScrollView(
                 controller: scrollController,
                 padding:
-                    ResponsiveConfig.of(context).containerPadding +
+                    EdgeInsets.symmetric(
+                      vertical:
+                          ResponsiveConfig.of(context).pagePadding.vertical,
+                    ) +
                     EdgeInsets.only(bottom: 16),
                 child: Column(
                   spacing: 16,
                   children: [
-                    // Wrap(
-                    //   children: [
-                    //     AppButton(
-                    //       onPressed: () {
-                    //         Api.mutations.removeConversationAssistant();
-                    //       },
-                    //       title: const Text("Remove assistant"),
-                    //     ),
-                    //     AppButton(
-                    //       onPressed: () {
-                    //         Api.mutations.clearConversation(widget.material.id);
-                    //       },
-                    //       title: const Text("Clear conversation"),
-                    //     ),
-                    //   ],
-                    // ),
-                    AppCard(
-                      title: TermsText(
-                        widget.conversation.instructions,
-                        style: Theme.of(context).textTheme.bodyMedium,
+                    Wrap(
+                      children: [
+                        AppButton(
+                          onPressed: () {
+                            Api.mutations.removeConversationAssistant();
+                          },
+                          title: const Text("Remove assistant"),
+                        ),
+                        AppButton(
+                          onPressed: () {
+                            Api.mutations.clearConversation(widget.material.id);
+                          },
+                          title: const Text("Clear conversation"),
+                        ),
+                      ],
+                    ),
+
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal:
+                            ResponsiveConfig.of(context).pagePadding.horizontal,
                       ),
-                      subtitle: Column(
-                        spacing: 8,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          for (var character in widget.conversation.characters)
-                            if (character.name == "\$user")
-                              Row(
-                                spacing: 16,
-                                children: [
-                                  SizedBox(
-                                    width: 80,
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        ImggenUserAvatar(
-                                          avatar: AuthController().user.avatar,
-                                        ),
-                                        Text(AuthController().user.name),
-                                      ],
-                                    ),
-                                  ),
-                                  Expanded(child: Text("You")),
-                                ],
-                              )
-                            else
-                              Row(
-                                spacing: 16,
-                                children: [
-                                  SizedBox(
-                                    width: 80,
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        ImggenUserAvatar(
-                                          avatar: character.avatar!,
-                                        ),
-                                        ConstrainedBox(
-                                          constraints: const BoxConstraints(
-                                            maxWidth: 100,
-                                          ),
-                                          child: Text(
-                                            character.name,
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Text(character.description ?? ""),
-                                  ),
-                                ],
-                              ),
-                        ],
+                      child: CharactersArea3(
+                        characters: conversation.characters,
+                        instructions: conversation.instructions,
                       ),
                     ),
 
+                    Divider(color: AppColors.onSurface.op(0.1)),
+
                     controller.turns.builder((turns) {
-                      return Column(
-                        spacing: 16,
-                        children: [
-                          if (controller.isStarted) ...[
-                            controller.sending.builder((_) {
-                              return Column(
-                                spacing: 16,
-                                children: [
-                                  for (var turn in turns)
-                                    ConversationTurnWidget(
-                                      turn: turn,
-                                      material: widget.material,
-                                    ),
-
-                                  if (controller.sending.value)
-                                    ConversationTurnSkeleton(
-                                      isUser: true,
-                                      avatar: ImggenUserAvatar(
-                                        avatar: AuthController().user.avatar,
+                      return Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal:
+                              ResponsiveConfig.of(
+                                context,
+                              ).pagePadding.horizontal,
+                        ),
+                        child: Column(
+                          spacing: 16,
+                          children: [
+                            if (controller.isStarted) ...[
+                              controller.sending.builder((_) {
+                                return Column(
+                                  spacing: 16,
+                                  children: [
+                                    for (var turn in turns)
+                                      ConversationTurnWidget(
+                                        turn: turn,
+                                        material: widget.material,
                                       ),
-                                    ),
 
-                                  if (controller.waitingAI)
-                                    ConversationTurnSkeleton(
-                                      isUser: false,
-                                      avatar:
-                                          controller.nextTurn == null
-                                              ? null
-                                              : ImggenUserAvatar(
-                                                avatar:
-                                                    (widget.material.details
-                                                            as Fragment$MaterialDetails$$ConversationDetails)
-                                                        .characters
-                                                        .firstWhere(
-                                                          (element) =>
-                                                              element.name ==
-                                                              controller
-                                                                  .nextTurn,
-                                                        )
-                                                        .avatar!,
-                                              ),
-                                    ),
-                                ],
-                              );
-                            }),
-                          ] else ...[
-                            AppButton(
-                              onPressed: controller.listen,
-                              title: const Text("Start conversation"),
-                            ),
+                                    if (controller.sending.value)
+                                      ConversationTurnSkeleton(
+                                        isUser: true,
+                                        avatar: ImggenUserAvatar(
+                                          avatar: AuthController().user.avatar,
+                                        ),
+                                      ),
+
+                                    if (controller.waitingAI)
+                                      ConversationTurnSkeleton(
+                                        isUser: false,
+                                        avatar:
+                                            controller.nextTurn == null
+                                                ? null
+                                                : ImggenUserAvatar(
+                                                  avatar:
+                                                      (widget.material.details
+                                                              as Fragment$MaterialDetails$$ConversationDetails)
+                                                          .characters
+                                                          .firstWhere(
+                                                            (element) =>
+                                                                element.name ==
+                                                                controller
+                                                                    .nextTurn,
+                                                          )
+                                                          .avatar!,
+                                                ),
+                                      ),
+                                  ],
+                                );
+                              }),
+                            ] else ...[
+                              AppButton(
+                                onPressed: controller.listen,
+                                title: const Text("Start conversation"),
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       );
                     }),
                   ],
@@ -383,7 +344,7 @@ class ConversationTurnWidget extends StatefulWidget {
   });
 
   final Fragment$ConversationTurn turn;
-  final Fragment$DetailedMaterial material;
+  final MaterialController material;
 
   @override
   State<ConversationTurnWidget> createState() => _ConversationTurnWidgetState();
@@ -397,50 +358,7 @@ class _ConversationTurnWidgetState extends State<ConversationTurnWidget>
     final details =
         widget.material.details
             as Fragment$MaterialDetails$$ConversationDetails;
-
     return details.characters.firstWhere((element) => element.name == name);
-  }
-
-  Gradient getGradient(double progress) {
-    if (isUser) {
-      return LinearGradient(
-        colors: [
-          AppColors.primary,
-          AppColors.primary,
-          AppColors.primary.op(0.6),
-          AppColors.primary,
-          AppColors.primary,
-        ],
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-        stops: [
-          0,
-          (progress - 0.3).clamp(0, 1),
-          progress,
-          (progress + 0.3).clamp(0, 1),
-          1,
-        ],
-      );
-    } else {
-      return LinearGradient(
-        colors: [
-          AppColors.secondary,
-          AppColors.secondary,
-          AppColors.secondary.op(0.6),
-          AppColors.secondary,
-          AppColors.secondary,
-        ],
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-        stops: [
-          0,
-          (progress - 0.3).clamp(0, 1),
-          progress,
-          (progress + 0.3).clamp(0, 1),
-          1,
-        ],
-      );
-    }
   }
 
   ConversationController? _controller;
@@ -452,97 +370,6 @@ class _ConversationTurnWidgetState extends State<ConversationTurnWidget>
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    if (_controller == null) {
-      _controller = ConversationPlayerProvider.of(context);
-      lastPlaying = controller.isTurnPlaying(widget.turn.id);
-      controller.playingTurnId.addSlot(this);
-    }
-
-    return SizedBox(
-      width: double.infinity,
-      child: Row(
-        children: [
-          if (isUser) SizedBox(width: 80),
-          Expanded(
-            child: Builder(
-              builder: (context) {
-                Widget child = DefaultTextStyle.merge(
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.white),
-                  child: Builder(
-                    builder: (context) {
-                      var children = [
-                        ImggenUserAvatar(
-                          avatar:
-                              isUser
-                                  ? AuthController().user.avatar
-                                  : character(widget.turn.character).avatar!,
-                        ),
-                        controller.audioStates[widget.turn.id]!.builder((_) {
-                          final state = controller.audioStates[widget.turn.id]!;
-                          if (state.error != null) {
-                            return const Icon(
-                              Icons.error,
-                              color: AppColors.error,
-                            );
-                          }
-                          if (!state.value) {
-                            return ConversationPlayer(turn: widget.turn);
-                          }
-                          return CircularProgressIndicator.adaptive();
-                        }),
-                        Expanded(child: TermsText(widget.turn.text!)),
-                      ];
-
-                      if (isUser) {
-                        children = children.reversed.toList();
-                      }
-
-                      return Row(
-                        spacing: 16,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: children,
-                      );
-                    },
-                  ),
-                );
-
-                return controller.playingTurnId.builder((_) {
-                  final isPlaying = controller.isTurnPlaying(widget.turn.id);
-                  if (isPlaying) {
-                    return controller.progress.builder((pr) {
-                      return Container(
-                        padding: ResponsiveConfig.of(context).containerPadding,
-                        decoration: BoxDecoration(
-                          gradient: getGradient(pr),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: child,
-                      );
-                    });
-                  } else {
-                    return Container(
-                      padding: ResponsiveConfig.of(context).containerPadding,
-                      decoration: BoxDecoration(
-                        color: isUser ? AppColors.primary : AppColors.secondary,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: child,
-                    );
-                  }
-                });
-              },
-            ),
-          ),
-          if (!isUser) SizedBox(width: 80),
-        ],
-      ),
-    );
-  }
-
   bool? lastPlaying;
 
   @override
@@ -552,6 +379,167 @@ class _ConversationTurnWidgetState extends State<ConversationTurnWidget>
       Scrollable.ensureVisible(context);
     }
     lastPlaying = isPlaying;
+  }
+
+  Widget _buildCharacterArea() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        controller.audioStates[widget.turn.id]!.builder((_) {
+          final state = controller.audioStates[widget.turn.id]!;
+          if (state.error != null) {
+            return Icon(Icons.error, color: AppColors.error, size: 16);
+          }
+          if (!state.value) {
+            return ConversationPlayer(turn: widget.turn);
+          }
+          return SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator.adaptive(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation(AppColors.primary),
+            ),
+          );
+        }),
+        SizedBox(height: 4),
+        ImggenUserAvatar(
+          avatar:
+              widget.turn.character == "\$user"
+                  ? AuthController().user.avatar
+                  : character(widget.turn.character).avatar!,
+          size: 48,
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_controller == null) {
+      _controller = ConversationPlayerProvider.of(context);
+      lastPlaying = controller.isTurnPlaying(widget.turn.id);
+      controller.playingTurnId.addSlot(this);
+    }
+
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (isUser) SizedBox(width: 80),
+          if (!isUser) _buildCharacterArea(),
+          Expanded(
+            child: controller.playingTurnId.builder((_) {
+              final isPlaying = controller.isTurnPlaying(widget.turn.id);
+
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment:
+                        isUser
+                            ? MainAxisAlignment.end
+                            : MainAxisAlignment.start,
+                    children: [
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: constraints.maxWidth * 0.7,
+                        ),
+                        child: Container(
+                          margin: EdgeInsets.only(
+                            right: isUser ? AppDimensions.spacing1 : 0,
+                            left: isUser ? 0 : AppDimensions.spacing1,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                isUser ? AppColors.primary : AppColors.surface,
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(20),
+                              topRight: Radius.circular(20),
+                              bottomLeft: Radius.circular(isUser ? 20 : 5),
+                              bottomRight: Radius.circular(isUser ? 5 : 20),
+                            ),
+                            boxShadow: [
+                              if (!isUser)
+                                BoxShadow(
+                                  color: AppColors.onSurface.op(0.05),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 2),
+                                ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(20),
+                              topRight: Radius.circular(20),
+                              bottomLeft: Radius.circular(isUser ? 20 : 5),
+                              bottomRight: Radius.circular(isUser ? 5 : 20),
+                            ),
+                            child: Stack(
+                              children: [
+                                if (isPlaying)
+                                  controller.progress.builder((pr) {
+                                    return Positioned.fill(
+                                      child: LinearProgressIndicator(
+                                        value: pr,
+                                        backgroundColor: Colors.transparent,
+                                        valueColor: AlwaysStoppedAnimation(
+                                          isUser
+                                              ? Colors.white.op(0.2)
+                                              : AppColors.primary.op(0.2),
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                                Padding(
+                                  padding: EdgeInsets.all(12),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        isUser
+                                            ? CrossAxisAlignment.end
+                                            : CrossAxisAlignment.start,
+                                    children: [
+                                      if (!isUser)
+                                        Text(
+                                          widget.turn.character,
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.bodyMedium!.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+
+                                      TermsText(
+                                        widget.turn.text!,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium?.copyWith(
+                                          color:
+                                              isUser
+                                                  ? Colors.white
+                                                  : AppColors.onSurface,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+            }),
+          ),
+          if (isUser) _buildCharacterArea(),
+          if (!isUser) SizedBox(width: 80),
+        ],
+      ),
+    );
   }
 }
 
@@ -569,105 +557,6 @@ class _ConversationUserInputState extends State<ConversationUserInput> {
 
   double height = 60;
 
-  AudioRecorder record = AudioRecorder();
-
-  Future<Uint8List?> stopRecording() async {
-    final path = await record.stop();
-
-    recording.value = false;
-    cancelling.value = false;
-
-    _subscription?.cancel();
-    _subscription = null;
-
-    if (path == null) {
-      return null;
-    }
-
-    Uint8List buffer;
-
-    if (kIsWeb) {
-      buffer = (await get(Uri.parse(path))).bodyBytes;
-    } else {
-      throw UnimplementedError();
-    }
-
-    widget.onSend(null, buffer);
-
-    return buffer;
-
-    // if (res == null) {
-    //   throw Exception("Recording failed");
-    // }
-
-    // if (kIsWeb) {
-    //   final blobRes = await get(Uri.parse(res));
-    //   if (blobRes.statusCode != 200) {
-    //     throw Exception("Recording failed: ${blobRes.statusCode}");
-    //   }
-    //   print("Recording blob: ${blobRes.bodyBytes.length}");
-    //   return blobRes.bodyBytes;
-    // } else {
-    //   final path = (await getTemporaryDirectory()).path;
-    //   final p = "$path/$res";
-    //   throw Exception("Recording failed: $p");
-    // }
-  }
-
-  Future<void> cancelRecording() async {
-    setState(() {
-      recording.value = false;
-    });
-    if (await record.isRecording()) {
-      await record.stop();
-    }
-
-    amplitudes.clear();
-
-    _subscription?.cancel();
-    _subscription = null;
-  }
-
-  Future<void> startRecording() async {
-    cancelling.value = false;
-    if (await record.isRecording()) {
-      await cancelRecording();
-    }
-
-    amplitudes.clear();
-    setState(() {
-      recording.value = true;
-    });
-
-    _subscription = record
-        .onAmplitudeChanged(Duration(milliseconds: 16))
-        .listen((amplitude) {
-          amplitudes.add(amplitude);
-        });
-
-    String path;
-
-    if (kIsWeb) {
-      path = "";
-    } else {
-      path =
-          "${(await getTemporaryDirectory()).path}/${Random().nextInt(1000000)}.wav";
-    }
-
-    record.start(
-      RecordConfig(
-        encoder: AudioEncoder.wav,
-        sampleRate: 16000,
-        numChannels: 1,
-      ),
-      path: path,
-    );
-
-    setState(() {});
-  }
-
-  StreamSubscription<Amplitude>? _subscription;
-
   Signal<bool> cancelling = Signal<bool>(false);
   Signal<bool> recording = Signal<bool>(false);
 
@@ -684,7 +573,7 @@ class _ConversationUserInputState extends State<ConversationUserInput> {
       alignment: Alignment.bottomCenter,
       padding: containerPadding,
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: AppColors.surface,
         boxShadow: [
           BoxShadow(
             color: AppColors.onSurface.op(0.1),
@@ -773,35 +662,23 @@ class _ConversationUserInputState extends State<ConversationUserInput> {
               bottom: 0,
               duration: animationDuration,
               child: [recording, cancelling].multiSignal.builder((_) {
-                return AppButton(
-                  onPressed: () {},
-                  variant: AppButtonVariant.text,
-                  size: AppSizeVariant.large,
-                  onTapUp: (details) async {
-                    cancelRecording();
+                return RecordWidget(
+                  onRecordComplete: (data) {
+                    widget.onSend(null, data);
                   },
-
-                  onTapDown: (details) async {
-                    startRecording();
+                  onRecordStart: () {
+                    recording.value = true;
                   },
-                  onTapCancel: () {
-                    print("tap cancel");
-                    if (cancelling.value) {
-                      cancelRecording();
-                    } else {
-                      stopRecording();
-                    }
+                  onRecordCancel: () {
+                    recording.value = false;
                   },
-                  onCancelling: (cancelling) {
-                    print("cancelling: $cancelling");
+                  onAmplitudeChanged: (amplitude) {
+                    amplitudes.add(amplitude);
+                  },
+                  onCancellingStateChanged: (cancelling) {
                     this.cancelling.value = cancelling;
                   },
-                  title:
-                      recording.value
-                          ? cancelling.value
-                              ? Icon(Icons.cabin, color: AppColors.primary)
-                              : Icon(Icons.stop, color: AppColors.primary)
-                          : Icon(Icons.mic, color: AppColors.primary),
+                  size: 25,
                 );
               }),
             ),
@@ -950,6 +827,258 @@ class __AmpItemState extends State<_AmpItem> {
       decoration: BoxDecoration(
         color: widget.color,
         borderRadius: BorderRadius.circular(4),
+      ),
+    );
+  }
+}
+
+class CharactersArea1 extends StatelessWidget {
+  const CharactersArea1({
+    super.key,
+    required this.characters,
+    required this.instructions,
+  });
+
+  final List<Fragment$ConversationCharacter> characters;
+  final LinguisticUnitSet instructions;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      title: TermsText(
+        instructions,
+        style: Theme.of(context).textTheme.bodyMedium,
+      ),
+      subtitle: Column(
+        spacing: 8,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var character in characters)
+            Row(
+              spacing: 16,
+              children: [
+                SizedBox(
+                  width: 80,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      ImggenUserAvatar(
+                        avatar:
+                            character.name == "\$user"
+                                ? AuthController().user.avatar
+                                : character.avatar!,
+                      ),
+                      Text(
+                        character.name == "\$user"
+                            ? AuthController().user.name
+                            : character.name,
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    character.name == "\$user"
+                        ? "You"
+                        : character.description ?? "",
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class CharactersArea2 extends StatelessWidget {
+  const CharactersArea2({
+    super.key,
+    required this.characters,
+    required this.instructions,
+  });
+
+  final List<Fragment$ConversationCharacter> characters;
+  final LinguisticUnitSet instructions;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.onSurface.op(0.05),
+                blurRadius: 10,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Conversation Partners",
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              SizedBox(height: 16),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (var character in characters)
+                      Padding(
+                        padding: EdgeInsets.only(right: 16),
+                        child: Column(
+                          children: [
+                            ImggenUserAvatar(
+                              size: 64,
+                              avatar:
+                                  character.name == "\$user"
+                                      ? AuthController().user.avatar
+                                      : character.avatar!,
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              character.name == "\$user"
+                                  ? AuthController().user.name
+                                  : character.name,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            if (character.description != null)
+                              Container(
+                                constraints: BoxConstraints(maxWidth: 150),
+                                child: Text(
+                                  character.description!,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 16),
+        Container(
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.onSurface.op(0.05),
+                blurRadius: 10,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Instructions",
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              SizedBox(height: 8),
+              TermsText(
+                instructions,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class CharactersArea3 extends StatelessWidget {
+  const CharactersArea3({
+    super.key,
+    required this.characters,
+    required this.instructions,
+  });
+
+  final List<Fragment$ConversationCharacter> characters;
+  final LinguisticUnitSet instructions;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [AppColors.primary.op(0.1), AppColors.surface],
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        spacing: 16,
+        children: [
+          SizedBox(height: 8),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: TermsText(
+              instructions,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+          ...characters.map((character) {
+            final isUser = character.name == "\$user";
+            return Container(
+              width: double.infinity,
+              margin: EdgeInsets.symmetric(horizontal: 8),
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.primary.op(0.2)),
+              ),
+              child: Row(
+                children: [
+                  ImggenUserAvatar(
+                    size: 60,
+                    avatar:
+                        isUser
+                            ? AuthController().user.avatar
+                            : character.avatar!,
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          isUser ? AuthController().user.name : character.name,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        if (!isUser && character.description != null)
+                          Text(
+                            character.description!,
+                            style: Theme.of(context).textTheme.bodySmall,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
       ),
     );
   }

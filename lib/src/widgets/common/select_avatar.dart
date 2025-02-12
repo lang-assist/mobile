@@ -43,9 +43,7 @@ class _SelectAvatarState extends State<SelectAvatar> {
             AppButton(
               size: AppSizeVariant.medium,
               variant: AppButtonVariant.text,
-              onPressed: () {
-                // TODO: Yükleme işlemi
-              },
+              onPressed: () {},
               title: Row(children: [Icon(Icons.upload), Text("Yükle")]),
             ),
           ],

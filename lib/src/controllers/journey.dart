@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:api/api.dart';
+import 'package:assist_app/src/controllers/path.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_flutter/sign_flutter.dart';
@@ -7,8 +10,13 @@ import 'package:user_data/user_data.dart';
 final journeyController = _JourneyController();
 
 enum AIModels {
+  gpt4oAssistant("gpt-4o-assistant"),
+  gpt4oMiniAssistant("gpt-4o-mini-assistant"),
   gpt4o("gpt-4o"),
-  gpt4oMini("gpt-4o-mini");
+  gptO1("gpt-o1"),
+  gptO1Mini("gpt-o1-mini"),
+  claudeSonnet("claude-sonnet"),
+  deepseekReasoner("DeepSeek-R1");
 
   const AIModels(this.dbName);
   final String dbName;
@@ -19,48 +27,73 @@ class _JourneyController extends VoidSignal {
   static final _JourneyController _instance = _JourneyController._();
   factory _JourneyController() => _instance;
 
+  bool _fetchingJourney = false;
+
+  bool get fetchingJourney => _fetchingJourney;
+
   Fragment$DetailedJourney? _journey;
 
   Fragment$DetailedJourney get journey => _journey!;
 
-  Fragment$DetailedPath? _initPath;
-  List<Fragment$DetailedMaterial>? _initMaterials;
+  PathController? _pathController;
 
-  List<Fragment$DetailedMaterial> get initMaterials => _initMaterials!;
-
-  bool get hasInitMaterials => _initMaterials != null;
-
-  List<Fragment$DetailedPath> get paths {
-    if (_initPath != null) {
-      return [_initPath!];
-    }
-    return journey.paths.where((e) => e.isActive).toList();
-  }
+  PathController get pathController => _pathController!;
 
   bool _initialized = false;
 
   bool get initialized => _initialized;
+
+  Future<void> _setPath(Fragment$DetailedPath path) async {
+    _pathController = PathController(path);
+    if (path.type == Enum$PathType.INITIAL) {
+      await _pathController!.fetchMaterials();
+    }
+    emit();
+  }
 
   Future<void> setJourney(Fragment$Journey journey) async {
     final detailedJourney = await Api.queries.journey(journey.id);
     _journey = detailedJourney;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString("lastJourneyId", journey.id);
+    await _setPath(detailedJourney!.paths.first);
     emit();
+  }
+
+  void setJourneyWithId(String id, {Completer? completer}) {
+    _fetchingJourney = true;
+    Api.queries.journey(id).then((journey) {
+      _journey = journey;
+      _setPath(journey!.paths.first);
+      _fetchingJourney = false;
+      completer?.complete();
+      emit();
+    });
   }
 
   bool get hasJourney => _journey != null;
 
   void clearJourney() {
     _journey = null;
+    _pathController = null;
     SharedPreferences.getInstance().then((prefs) {
       prefs.remove("lastJourneyId");
     });
     emit();
   }
 
+  Future<void> refresh() async {
+    final journey = await Api.queries.journey(this.journey.id);
+    _journey = journey;
+    if (journey!.paths.isNotEmpty) {
+      _pathController = PathController(journey.paths.first);
+    }
+    emit();
+  }
+
   Future<void> init() async {
     if (_initialized) return;
+
     _initialized = true;
     try {
       final journey = await getLastJourney();
@@ -108,11 +141,14 @@ class _JourneyController extends VoidSignal {
       ),
     );
 
-    setJourney(journey.journey);
-
-    _initPath = journey.path;
-    _initMaterials = journey.materials;
+    await setJourney(journey.journey);
 
     return journey.journey;
+  }
+
+  Future<Fragment$Material> waitMaterial(String id) async {
+    final material = await Api.queries.detailedMaterial(id);
+
+    return material;
   }
 }

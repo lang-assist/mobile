@@ -3,9 +3,9 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  audioplayers_windows
   connectivity_plus
   file_selector_windows
-  just_audio_windows
   record_windows
 )
 

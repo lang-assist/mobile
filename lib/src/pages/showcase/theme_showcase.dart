@@ -26,7 +26,7 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
       children: [
         Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
-          child: Text(title, style: AppTypography.headlineMedium),
+          child: Text(title, style: typo.headlineMedium),
         ),
         ...children,
         const SizedBox(height: AppSpacing.xl),
@@ -46,15 +46,37 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        Text(name, style: AppTypography.bodySmall),
+        Text(name, style: typo.bodySmall),
       ],
     );
+  }
+
+  Future<void> _load() async {
+    await Future.delayed(const Duration(seconds: 2));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Tema & Componentler')),
+      appBar: AppBar(
+        title: const Text('Tema & Componentler'),
+        actions: [
+          AppButton(
+            title: const Text('Tema Değiştir'),
+            onPressed: () {
+              ThemeProvider.instance
+                  .setBrightness(
+                    ThemeProvider.instance.isDark
+                        ? Brightness.light
+                        : Brightness.dark,
+                  )
+                  .then((_) {
+                    setState(() {});
+                  });
+            },
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,8 +94,6 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                     const SizedBox(width: AppSpacing.md),
                     _buildColorBox('Error', AppColors.error),
                     const SizedBox(width: AppSpacing.md),
-                    _buildColorBox('Background', AppColors.background),
-                    const SizedBox(width: AppSpacing.md),
                     _buildColorBox('Surface', AppColors.surface),
                   ],
                 ),
@@ -87,21 +107,18 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Display Large', style: AppTypography.displayLarge),
-                    Text('Display Medium', style: AppTypography.displayMedium),
-                    Text('Display Small', style: AppTypography.displaySmall),
-                    Text('Headline Large', style: AppTypography.headlineLarge),
-                    Text(
-                      'Headline Medium',
-                      style: AppTypography.headlineMedium,
-                    ),
-                    Text('Title Large', style: AppTypography.titleLarge),
-                    Text('Body Large', style: AppTypography.bodyLarge),
-                    Text('Body Medium', style: AppTypography.bodyMedium),
-                    Text('Body Small', style: AppTypography.bodySmall),
-                    Text('Label Large', style: AppTypography.labelLarge),
-                    Text('Label Medium', style: AppTypography.labelMedium),
-                    Text('Label Small', style: AppTypography.labelSmall),
+                    Text('Display Large', style: typo.displayLarge),
+                    Text('Display Medium', style: typo.displayMedium),
+                    Text('Display Small', style: typo.displaySmall),
+                    Text('Headline Large', style: typo.headlineLarge),
+                    Text('Headline Medium', style: typo.headlineMedium),
+                    Text('Title Large', style: typo.titleLarge),
+                    Text('Body Large', style: typo.bodyLarge),
+                    Text('Body Medium', style: typo.bodyMedium),
+                    Text('Body Small', style: typo.bodySmall),
+                    Text('Label Large', style: typo.labelLarge),
+                    Text('Label Medium', style: typo.labelMedium),
+                    Text('Label Small', style: typo.labelSmall),
                   ],
                 ),
               ),
@@ -117,54 +134,54 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                   children: [
                     AppButton(
                       title: const Text('Primary Button'),
-                      onPressed: () {},
+                      onPressed: _load,
                       variant: AppButtonVariant.primary,
                     ),
                     AppButton(
                       title: const Text('Satın Al'),
-                      onPressed: () {},
+                      onPressed: _load,
                       variant: AppButtonVariant.highlighted,
                       prefixIcon: const Icon(Icons.shopping_cart),
                     ),
                     AppButton(
                       title: const Text('Secondary Button'),
-                      onPressed: () {},
+                      onPressed: _load,
                       variant: AppButtonVariant.secondary,
                     ),
                     AppButton(
                       title: const Text('Danger Button'),
-                      onPressed: () {},
+                      onPressed: _load,
                       variant: AppButtonVariant.danger,
                     ),
                     AppButton(
                       title: const Text('Outlined Button'),
-                      onPressed: () {},
+                      onPressed: _load,
                       variant: AppButtonVariant.outlined,
                     ),
                     AppButton(
                       title: const Text('Text Button'),
-                      onPressed: () {},
+                      onPressed: _load,
                       variant: AppButtonVariant.text,
                     ),
                     AppButton(
                       title: const Text('Loading Button'),
-                      onPressed: () {},
+                      onPressed: _load,
                       isLoading: true,
                     ),
                     AppButton(
                       title: const Text('Disabled Button'),
-                      onPressed: () {},
+                      onPressed: _load,
                       isActive: false,
                     ),
                     AppButton(
-                      title: const Text('Icon Button'),
-                      onPressed: () {},
-                      prefixIcon: const Icon(Icons.add),
+                      title: const Icon(Icons.add),
+                      onPressed: _load,
+                      variant: AppButtonVariant.icon,
                     ),
                     AppButton(
                       title: const Text('With Subtitle'),
                       subtitle: const Text('Alt başlık'),
-                      onPressed: () {},
+                      onPressed: _load,
                       variant: AppButtonVariant.primary,
                     ),
                     AppButton(
@@ -176,18 +193,15 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                           const Text('Custom Title'),
                         ],
                       ),
-                      onPressed: () {},
+                      onPressed: _load,
                       variant: AppButtonVariant.primary,
                     ),
                     // Özelleştirilmiş butonlar
-                    const Text(
-                      'Özelleştirilmiş Butonlar',
-                      style: AppTypography.labelMedium,
-                    ),
+                    Text('Özelleştirilmiş Butonlar', style: typo.labelMedium),
                     const SizedBox(height: AppSpacing.xs),
                     AppButton(
                       title: const Text('Google ile Giriş Yap'),
-                      onPressed: () {},
+                      onPressed: _load,
                       variant: AppButtonVariant.outlined,
                       prefixIcon: ImgGenIcons.name(ImgGenIconNames.google),
                       customBackgroundDecoration: BoxDecoration(
@@ -202,7 +216,7 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                           ),
                         ],
                       ),
-                      customTextStyle: AppTypography.labelLarge.copyWith(
+                      customTextStyle: typo.labelLarge.copyWith(
                         color: Colors.grey.shade700,
                         fontWeight: FontWeight.w500,
                       ),
@@ -211,7 +225,7 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                     const SizedBox(height: AppSpacing.md),
                     AppButton(
                       title: const Text('Facebook ile Devam Et'),
-                      onPressed: () {},
+                      onPressed: _load,
                       variant: AppButtonVariant.primary,
                       prefixIcon: const Icon(Icons.facebook),
                       customBackgroundDecoration: BoxDecoration(
@@ -225,7 +239,7 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                           ),
                         ],
                       ),
-                      customTextStyle: AppTypography.labelLarge.copyWith(
+                      customTextStyle: typo.labelLarge.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
                       ),
@@ -234,7 +248,7 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                     const SizedBox(height: AppSpacing.md),
                     AppButton(
                       title: const Text('Apple ID ile Giriş'),
-                      onPressed: () {},
+                      onPressed: _load,
                       variant: AppButtonVariant.primary,
                       prefixIcon: const Icon(Icons.apple),
                       customBackgroundDecoration: BoxDecoration(
@@ -248,7 +262,7 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                           ),
                         ],
                       ),
-                      customTextStyle: AppTypography.labelLarge.copyWith(
+                      customTextStyle: typo.labelLarge.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
                       ),
@@ -286,7 +300,11 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                       AppTextFormField(
                         label: 'With Error',
                         hint: 'Type something',
-                        validator: (value) => 'This field has an error',
+                        validator:
+                            (value) =>
+                                value.isEmpty
+                                    ? 'This field has an error'
+                                    : null,
                       ),
                       const SizedBox(height: AppSpacing.md),
                       AppTextFormField(
@@ -308,7 +326,7 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Checkbox örnekleri
-                    const Text('Checkbox', style: AppTypography.titleMedium),
+                    Text('Checkbox', style: typo.titleMedium),
                     const SizedBox(height: AppSpacing.sm),
                     Wrap(
                       spacing: AppSpacing.lg,
@@ -339,10 +357,7 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                     const SizedBox(height: AppSpacing.lg),
 
                     // Radio örnekleri
-                    const Text(
-                      'Radio Buttons',
-                      style: AppTypography.titleMedium,
-                    ),
+                    Text('Radio Buttons', style: typo.titleMedium),
                     const SizedBox(height: AppSpacing.sm),
                     Wrap(
                       spacing: AppSpacing.lg,
@@ -396,10 +411,7 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Single Select örneği
-                    const Text(
-                      'Single Select',
-                      style: AppTypography.titleMedium,
-                    ),
+                    Text('Single Select', style: typo.titleMedium),
                     const SizedBox(height: AppSpacing.sm),
 
                     // Seçili değeri göster
@@ -408,7 +420,7 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                       builder:
                           (selectedValue) => Text(
                             'Seçili Kart: $selectedValue',
-                            style: AppTypography.bodyMedium.copyWith(
+                            style: typo.bodyMedium.copyWith(
                               color: AppColors.textSecondary,
                             ),
                           ),
@@ -416,48 +428,41 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                     const SizedBox(height: AppSpacing.md),
 
                     // Highlighted stil - Tam versiyon
-                    const Text(
-                      'Highlighted - Full',
-                      style: AppTypography.labelMedium,
-                    ),
+                    Text('Highlighted - Full', style: typo.labelMedium),
                     const SizedBox(height: AppSpacing.xs),
-                    AppSelectCard<String>(
-                      value: '1',
-                      selected: _selectedCard,
-                      title: 'Berber Shop',
-                      subtitle: 'Kadıköy Şubesi',
-                      variant: AppSelectCardVariant.highlighted,
-                      leading: CircleAvatar(
-                        backgroundColor: AppColors.primary,
-                        child: const Icon(Icons.store, color: Colors.white),
+                    _selectedCard.builder(
+                      (_) => AppSelectCard<String>(
+                        value: '1',
+                        signal: _selectedCard,
+                        title: 'Berber Shop',
+                        subtitle: 'Kadıköy Şubesi',
+                        variant: AppSelectCardVariant.highlighted,
+                        leading: CircleAvatar(
+                          backgroundColor: AppColors.primary,
+                          child: const Icon(Icons.store, color: Colors.white),
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                       ),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     ),
                     const SizedBox(height: AppSpacing.md),
 
                     // Filled stil - Sadece başlık
-                    const Text(
-                      'Filled - Only Title',
-                      style: AppTypography.labelMedium,
-                    ),
+                    Text('Filled - Only Title', style: typo.labelMedium),
                     const SizedBox(height: AppSpacing.xs),
                     AppSelectCard<String>(
                       value: '2',
-                      selected: _selectedCard,
+                      signal: _selectedCard,
                       title: 'Beauty Salon',
                       variant: AppSelectCardVariant.filled,
                     ),
                     const SizedBox(height: AppSpacing.md),
 
                     // Filled stil - Başlık ve alt başlık
-                    const Text(
-                      'Filled - With Subtitle',
-                      style: AppTypography.labelMedium,
-                    ),
+                    Text('Filled - With Subtitle', style: typo.labelMedium),
                     const SizedBox(height: AppSpacing.xs),
                     AppSelectCard<String>(
                       value: '3',
-                      selected: _selectedCard,
+                      signal: _selectedCard,
                       title: 'Nail Art',
                       subtitle: 'Şişli Şubesi',
                       variant: AppSelectCardVariant.filled,
@@ -465,14 +470,11 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                     const SizedBox(height: AppSpacing.md),
 
                     // Outlined stil - Leading icon ile
-                    const Text(
-                      'Outlined - With Leading',
-                      style: AppTypography.labelMedium,
-                    ),
+                    Text('Outlined - With Leading', style: typo.labelMedium),
                     const SizedBox(height: AppSpacing.xs),
                     AppSelectCard<String>(
                       value: '4',
-                      selected: _selectedCard,
+                      signal: _selectedCard,
                       title: 'Spa Center',
                       variant: AppSelectCardVariant.outlined,
                       leading: CircleAvatar(
@@ -483,14 +485,11 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                     const SizedBox(height: AppSpacing.md),
 
                     // Outlined stil - Trailing icon ile
-                    const Text(
-                      'Outlined - With Trailing',
-                      style: AppTypography.labelMedium,
-                    ),
+                    Text('Outlined - With Trailing', style: typo.labelMedium),
                     const SizedBox(height: AppSpacing.xs),
                     AppSelectCard<String>(
                       value: '5',
-                      selected: _selectedCard,
+                      signal: _selectedCard,
                       title: 'Massage Center',
                       variant: AppSelectCardVariant.outlined,
                       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -499,10 +498,7 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                     const SizedBox(height: AppSpacing.xl),
 
                     // Multi Select örneği
-                    const Text(
-                      'Multi Select',
-                      style: AppTypography.titleMedium,
-                    ),
+                    Text('Multi Select', style: typo.titleMedium),
                     const SizedBox(height: AppSpacing.sm),
 
                     // Seçili değerleri göster
@@ -511,7 +507,7 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                       builder:
                           (selectedValues) => Text(
                             'Seçili Servisler: ${selectedValues.isEmpty ? "Yok" : selectedValues.join(", ")}',
-                            style: AppTypography.bodyMedium.copyWith(
+                            style: typo.bodyMedium.copyWith(
                               color: AppColors.textSecondary,
                             ),
                           ),
@@ -519,14 +515,11 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                     const SizedBox(height: AppSpacing.md),
 
                     // Highlighted stil - Tam versiyon
-                    const Text(
-                      'Highlighted - Full',
-                      style: AppTypography.labelMedium,
-                    ),
+                    Text('Highlighted - Full', style: typo.labelMedium),
                     const SizedBox(height: AppSpacing.xs),
-                    AppMultiSelectCard<String>(
+                    AppSelectCard<String>(
                       value: '1',
-                      selectedValues: _selectedServices,
+                      signal: _selectedCard,
                       title: 'Saç Kesimi',
                       subtitle: '45 dakika',
                       variant: AppSelectCardVariant.highlighted,
@@ -537,33 +530,30 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                           color: Colors.white,
                         ),
                       ),
-                      trailing: Text('150₺', style: AppTypography.titleMedium),
+                      trailing: Text('150₺', style: typo.titleMedium),
                     ),
                     const SizedBox(height: AppSpacing.md),
 
                     // Filled stil - Sadece başlık
-                    const Text(
-                      'Filled - Only Title',
-                      style: AppTypography.labelMedium,
-                    ),
+                    Text('Filled - Only Title', style: typo.labelMedium),
                     const SizedBox(height: AppSpacing.xs),
-                    AppMultiSelectCard<String>(
+                    AppSelectCard<String>(
                       value: '2',
-                      selectedValues: _selectedServices,
+                      signal: _selectedCard,
                       title: 'Sakal Tıraşı',
                       variant: AppSelectCardVariant.filled,
                     ),
                     const SizedBox(height: AppSpacing.md),
 
                     // Outlined stil - Leading ve subtitle
-                    const Text(
+                    Text(
                       'Outlined - With Leading & Subtitle',
-                      style: AppTypography.labelMedium,
+                      style: typo.labelMedium,
                     ),
                     const SizedBox(height: AppSpacing.xs),
-                    AppMultiSelectCard<String>(
+                    AppSelectCard<String>(
                       value: '3',
-                      selectedValues: _selectedServices,
+                      signal: _selectedCard,
                       title: 'Saç Boyama',
                       subtitle: '120 dakika',
                       variant: AppSelectCardVariant.outlined,

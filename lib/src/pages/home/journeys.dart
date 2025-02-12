@@ -1,3 +1,4 @@
+import 'package:api/api.dart';
 import 'package:assist_app/src/controllers/journey.dart';
 import 'package:assist_app/src/routes.dart';
 import 'package:assist_app/src/scaffolds/app_scaffold.dart';
@@ -26,7 +27,6 @@ class _JourneysPageState extends State<JourneysPage> {
   Future<void> fetchJourneys() async {
     try {
       journeys = await Api.queries.journeys();
-      print(journeys);
     } catch (e) {
       error = e as GraphQLError;
     }
@@ -43,12 +43,26 @@ class _JourneysPageState extends State<JourneysPage> {
               : journeys!.isEmpty
               ? const _EmptyJourneys()
               : GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: responsive.gridColumns * 2,
+                  childAspectRatio: 1,
+                  crossAxisSpacing: responsive.containerPadding.horizontal,
+                  mainAxisSpacing: responsive.containerPadding.vertical,
                 ),
-                itemCount: journeys!.length,
+                padding: responsive.pagePadding,
+                itemCount: journeys!.length + 1,
                 itemBuilder:
-                    (context, index) => JourneyCard(journey: journeys![index]),
+                    (context, index) =>
+                        index == journeys!.length
+                            ? Center(
+                              child: AppButton(
+                                onPressed: () async {
+                                  context.createJourney();
+                                },
+                                title: Text("Create a journey"),
+                              ),
+                            )
+                            : JourneyCard(journey: journeys![index]),
               ),
     );
   }
@@ -71,7 +85,7 @@ class __EmptyJourneysState extends State<_EmptyJourneys> {
           Text("No journeys found"),
           TextButton(
             onPressed: () {
-              context.pushCreateJourney();
+              context.createJourney();
             },
             child: const Text("Create a journey"),
           ),
@@ -94,10 +108,19 @@ class _JourneyCardState extends State<JourneyCard> {
   @override
   Widget build(BuildContext context) {
     return AppCard(
+      image: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: Avatar.fromString(widget.journey.avatar).hslColors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+      ),
       onTap: () async {
         await journeyController.setJourney(widget.journey);
         if (context.mounted) {
-          context.pushJourney(widget.journey.id);
+          context.journey(widget.journey);
         }
       },
       title: Text(widget.journey.name),

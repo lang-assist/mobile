@@ -1,15 +1,19 @@
 import 'dart:async';
 
 import 'package:assist_app/src/controllers/journey.dart';
+import 'package:assist_app/src/controllers/path.dart';
+import 'package:assist_app/src/pages/content/material_page.dart';
 import 'package:assist_app/src/pages/home/create_journey.dart';
 import 'package:assist_app/src/pages/home/inital_test.dart';
+import 'package:assist_app/src/pages/showcase/theme_showcase.dart';
 import 'package:assist_utils/assist_utils.dart';
 import 'package:assist_app/src/pages/auth/sign_up_main_screen.dart';
 import 'package:assist_app/src/pages/home/home.dart';
-import 'package:assist_app/src/pages/showcase/theme_showcase.dart';
 import 'package:assist_app/src/utils/device.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sign_flutter/sign_flutter.dart';
 import 'package:user_data/user_data.dart';
 import 'pages/home/journeys.dart';
 import 'pages/splash.dart';
@@ -44,33 +48,24 @@ final Map<String, AppRoute> routes = {
   "/journeys": AppRoute(builder: JourneysPage.new, middlewares: {}),
   "/journeys/create": AppRoute(builder: CreateJourneyPage.new, middlewares: {}),
   "/journeys/initial": AppRoute(builder: InitialTestPage.new, middlewares: {}),
-  "/journeys/:id": AppRoute(
-    builder: HomePage.new,
+  "/material/:material": AppRoute(
+    builder: MaterialPageView.new,
     middlewares: {
-      "id": (value, redirect) {
-        if (journeyController.hasJourney) {
-          if (journeyController.journey.id != value) {
-            return redirect("/journeys");
-          }
-
-          return journeyController.journey;
+      "material": (value, redirect) async {
+        try {
+          final material = await Api.queries.detailedMaterial(value);
+          final materialController = MaterialController(material: material);
+          return materialController;
+        } catch (e) {
+          return redirect("/not-found");
         }
-
-        return Future(() async {
-          final journey = await Api.queries.journey(value);
-          if (journey == null) {
-            return redirect("/journeys");
-          }
-          journeyController.setJourney(journey);
-          return journey;
-        });
       },
     },
   ),
 };
 
 String? redirect(String requested, String? current) {
-  if (requested == "/welcome") {
+  if (requested == "/welcome" || requested == "/theme") {
     return null;
   }
   if (requested == current) {
@@ -127,23 +122,11 @@ FutureOr<String?> splashLoad(String location) {
                   return redirect(location, "/");
                 }
 
-                if (journeyController.paths.isEmpty) {
-                  return redirect(
-                    location,
-                    "/journeys/${journeyController.journey.id}",
-                  );
-                }
-
-                final hasOnlyOnePath = journeyController.paths.length == 1;
-
-                if (hasOnlyOnePath) {
-                  final path = journeyController.paths.first;
-                  if (path.type == Enum$PathType.INITIAL) {
-                    if (location == "/journeys/initial") {
-                      return redirect(location, null);
-                    }
-                    return redirect(location, "/journeys/initial");
+                if (journeyController.pathController.isInitial) {
+                  if (location == "/journeys/initial") {
+                    return redirect(location, null);
                   }
+                  return redirect(location, "/journeys/initial");
                 }
 
                 return redirect(location, null);
@@ -174,6 +157,7 @@ FutureOr<String?> splashLoad(String location) {
 
 final router = GoRouter(
   initialLocation: "/welcome",
+  navigatorKey: ThemeProvider.instance.navigatorKey,
   routes:
       [
         GoRoute(
@@ -238,12 +222,19 @@ final router = GoRouter(
                 }
               }
 
-              final child = ResponsiveProvider(
-                child: _ParametersHolder(
-                  parameters: resolvedParameters,
-                  child: e.value.builder(),
-                ),
-              );
+              final child = ThemeProvider.instance.brightness.builder((br) {
+                return ResponsiveProvider(
+                  child: Builder(
+                    builder: (context) {
+                      ThemeProvider.instance.context = context;
+                      return _ParametersHolder(
+                        parameters: resolvedParameters,
+                        child: e.value.builder(),
+                      );
+                    },
+                  ),
+                );
+              });
 
               if (resolvers.isNotEmpty) {
                 if (resolvers.any((e) => e is Future)) {
@@ -287,52 +278,49 @@ extension Routes on BuildContext {
     return _ParametersHolder.of(this).get<T>(name);
   }
 
-  void goSplash() {
-    return go("/welcome");
+  Future<void> _toRoute(String route) {
+    // if (kIsWeb) {
+    //   go(route);
+    //   return Future.value();
+    // }
+    return push(route);
   }
 
-  Future<void> pushSplash() {
-    return push("/welcome");
+  Future<void> splash() {
+    return _toRoute("/welcome");
   }
 
-  void goAuth() {
-    return go("/auth");
+  Future<void> auth() {
+    return _toRoute("/auth");
   }
 
-  Future<void> pushAuth() {
-    return push("/auth");
+  Future<void> home() {
+    return _toRoute("/");
   }
 
-  void goHome() {
-    return go("/");
+  Future<void> theme() {
+    return _toRoute("/theme");
   }
 
-  Future<void> pushTheme() {
-    return push("/theme");
+  Future<void> journeys() {
+    return _toRoute("/journeys");
   }
 
-  void goCreateJourney() {
-    return go("/journeys/create");
+  Future<void> createJourney() {
+    return _toRoute("/journeys/create");
   }
 
-  Future<void> pushCreateJourney() {
-    return push("/journeys/create");
+  Future<void> journey(Fragment$Journey journey) async {
+    await journeyController.setJourney(journey);
+    return _toRoute("/");
   }
 
-  void goJourney(String id) {
-    return go("/journeys/$id");
+  Future<void> journeyInitial() {
+    return _toRoute("/journeys/initial");
   }
 
-  Future<void> pushJourney(String id) {
-    return push("/journeys/$id");
-  }
-
-  void goJourneyInitial() {
-    return go("/journeys/initial");
-  }
-
-  Future<void> pushJourneyInitial() {
-    return push("/journeys/initial");
+  Future<void> material(String id) {
+    return _toRoute("/material/$id");
   }
 }
 
