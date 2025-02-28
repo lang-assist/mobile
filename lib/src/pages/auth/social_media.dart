@@ -14,7 +14,7 @@ class GoogleSignInButton extends StatelessWidget {
       title: Row(
         spacing: 8,
         children: [
-          ImgGenIcons.name(
+          AppIcons.name(
             ImgGenIconNames.google,
             size: 24,
             color: AppColors.primary,
@@ -40,7 +40,7 @@ class AppleSignInButton extends StatelessWidget {
       title: Row(
         spacing: 8,
         children: [
-          ImgGenIcons.name(
+          AppIcons.name(
             ImgGenIconNames.apple,
             size: 24,
             color: AppColors.primary,
@@ -64,9 +64,9 @@ class SocialMediaIcons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(AppDimensions.spacing4),
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
-        spacing: AppDimensions.spacing4,
+        spacing: AppSpacing.md,
         children: [
           SizedBox(width: double.infinity, child: const GoogleSignInButton()),
           SizedBox(width: double.infinity, child: const AppleSignInButton()),
@@ -87,7 +87,7 @@ class SocialMediaIcons extends StatelessWidget {
               title: Row(
                 spacing: 8,
                 children: [
-                  ImgGenIcons.name(ImgGenIconNames.email),
+                  AppIcons.name(ImgGenIconNames.email),
                   const Text("Continue With Email"),
                 ],
               ),

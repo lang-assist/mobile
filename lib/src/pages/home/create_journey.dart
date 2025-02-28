@@ -21,7 +21,7 @@ class _CreateJourneyPageState extends State<CreateJourneyPage>
   final to = Signal<Enum$SupportedLanguage?>(Enum$SupportedLanguage.en_US);
   final name = Signal<String>("test");
   final avatar = Signal<Avatar>(Avatar.fromString(randomColor()));
-  final model = Signal<AIModels>(AIModels.gpt4o);
+  final model = Signal<String?>(null);
   final valid = Signal<bool>(true);
 
   final pageController = PageController();
@@ -76,7 +76,7 @@ class _CreateJourneyPageState extends State<CreateJourneyPage>
         to: to.value!,
         name: name.value,
         avatar: avatar.value,
-        model: model.value,
+        modelSetId: model.value!,
       );
 
       if (journey != null && context.mounted) {
@@ -87,6 +87,10 @@ class _CreateJourneyPageState extends State<CreateJourneyPage>
 
   late final MultiSignal multi;
 
+  late final List<Fragment$ModelSet> modelSets;
+
+  Signal<bool> fetchingModelSets = Signal(true);
+
   @override
   void initState() {
     multi = [to, name, model].multiSignal;
@@ -96,6 +100,10 @@ class _CreateJourneyPageState extends State<CreateJourneyPage>
       }),
     );
     _validate();
+    Api.queries.modelSets().then((value) {
+      modelSets = value;
+      fetchingModelSets.value = false;
+    });
     super.initState();
   }
 
@@ -134,30 +142,36 @@ class _CreateJourneyPageState extends State<CreateJourneyPage>
   }
 
   Widget _buildAIModel() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          "Choose Your AI Model",
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        SizedBox(height: AppSpacing.lg),
-        ...AIModels.values.map(
-          (e) => Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: AppSelectCard<AIModels?>(
-              value: e,
-              signal: model,
-              title: e.name,
-              onTap: () {
-                model.value = e;
-              },
+    return fetchingModelSets.builder((v) {
+      if (v) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            "Choose Your AI Model",
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          SizedBox(height: AppSpacing.lg),
+          ...modelSets.map(
+            (e) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: AppSelectCard<String?>(
+                value: e.id,
+                signal: model,
+                title: e.name,
+                onTap: () {
+                  model.value = e.id;
+                },
+              ),
             ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    });
   }
 
   Widget _buildJourneyName(ResponsiveConfig config) {

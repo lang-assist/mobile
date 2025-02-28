@@ -9,18 +9,18 @@ import 'package:user_data/user_data.dart';
 
 final journeyController = _JourneyController();
 
-enum AIModels {
-  gpt4oAssistant("gpt-4o-assistant"),
-  gpt4oMiniAssistant("gpt-4o-mini-assistant"),
-  gpt4o("gpt-4o"),
-  gptO1("gpt-o1"),
-  gptO1Mini("gpt-o1-mini"),
-  claudeSonnet("claude-sonnet"),
-  deepseekReasoner("DeepSeek-R1");
+// enum AIModels {
+//   gpt4oAssistant("gpt-4o-assistant"),
+//   gpt4oMiniAssistant("gpt-4o-mini-assistant"),
+//   gpt4o("gpt-4o"),
+//   gptO1("gpt-o1"),
+//   gptO1Mini("gpt-o1-mini"),
+//   claudeSonnet("claude-sonnet"),
+//   deepseekReasoner("DeepSeek-R1");
 
-  const AIModels(this.dbName);
-  final String dbName;
-}
+//   const AIModels(this.dbName);
+//   final String dbName;
+// }
 
 class _JourneyController extends VoidSignal {
   _JourneyController._();
@@ -56,7 +56,9 @@ class _JourneyController extends VoidSignal {
     _journey = detailedJourney;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString("lastJourneyId", journey.id);
-    await _setPath(detailedJourney!.paths.first);
+    final activePaths =
+        detailedJourney!.paths.where((path) => path.isActive).toList();
+    await _setPath(activePaths.first);
     emit();
   }
 
@@ -128,7 +130,7 @@ class _JourneyController extends VoidSignal {
     required Enum$SupportedLanguage to,
     required String name,
     required Avatar avatar,
-    required AIModels model,
+    required String modelSetId,
   }) async {
     final journey = await Api.mutations.createJourney(
       CreateJourneyInput(
@@ -136,7 +138,7 @@ class _JourneyController extends VoidSignal {
           to: to,
           name: name,
           avatar: avatar.asHslInput!,
-          model: model.dbName,
+          modelSet: modelSetId,
         ),
       ),
     );

@@ -74,13 +74,13 @@ class _ConversationBuilderState extends State<ConversationBuilder> {
                       children: [
                         AppButton(
                           onPressed: () {
-                            Api.mutations.removeConversationAssistant();
+                            // Api.mutations.removeConversationAssistant();
                           },
                           title: const Text("Remove assistant"),
                         ),
                         AppButton(
                           onPressed: () {
-                            Api.mutations.clearConversation(widget.material.id);
+                            // Api.mutations.clearConversation(widget.material.id);
                           },
                           title: const Text("Clear conversation"),
                         ),
@@ -448,8 +448,8 @@ class _ConversationTurnWidgetState extends State<ConversationTurnWidget>
                         ),
                         child: Container(
                           margin: EdgeInsets.only(
-                            right: isUser ? AppDimensions.spacing1 : 0,
-                            left: isUser ? 0 : AppDimensions.spacing1,
+                            right: isUser ? AppSpacing.md : 0,
+                            left: isUser ? 0 : AppSpacing.md,
                           ),
                           decoration: BoxDecoration(
                             color:

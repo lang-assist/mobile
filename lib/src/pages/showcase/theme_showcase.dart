@@ -203,7 +203,7 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                       title: const Text('Google ile Giriş Yap'),
                       onPressed: _load,
                       variant: AppButtonVariant.outlined,
-                      prefixIcon: ImgGenIcons.name(ImgGenIconNames.google),
+                      prefixIcon: AppIcons.name(ImgGenIconNames.google),
                       customBackgroundDecoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(8),

@@ -1,3 +1,4 @@
+import 'package:assist_app/src/controllers/journey.dart';
 import 'package:sign_flutter/sign_flutter.dart';
 import 'package:user_data/user_data.dart';
 
@@ -41,10 +42,10 @@ class MaterialController extends VoidSignal {
 
   bool get isCreating {
     if (_detailed != null) {
-      return _detailed!.status == Enum$MaterialStatus.PREPARING;
+      return _detailed!.genStatus == Enum$MaterialGenStatus.CREATING;
     }
     if (_material != null) {
-      return _material!.status == Enum$MaterialStatus.PREPARING;
+      return _material!.genStatus == Enum$MaterialGenStatus.CREATING;
     }
     return false;
   }
@@ -99,15 +100,29 @@ class MaterialController extends VoidSignal {
     emit();
   }
 
-  Enum$MaterialStatus get status {
-    if (isCreating) return Enum$MaterialStatus.PREPARING;
-    if (isDetailed) return _detailed!.status;
-    return _material!.status;
+  Enum$MaterialCompStatus get completionStatus {
+    if (isCreating) return Enum$MaterialCompStatus.NOT_STARTED;
+    if (isDetailed) return _detailed!.compStatus;
+    return _material!.compStatus;
+  }
+
+  Enum$MaterialConvStatus get conversationStatus {
+    if (isCreating) return Enum$MaterialConvStatus.NOT_STARTED;
+    if (isDetailed) return _detailed!.convStatus;
+    return _material!.convStatus;
+  }
+
+  Enum$MaterialGenStatus get generationStatus {
+    if (isCreating) return Enum$MaterialGenStatus.CREATING;
+    if (isDetailed) return _detailed!.genStatus;
+    return _material!.genStatus;
   }
 }
 
 class PathController extends VoidSignal {
   PathController(this.path);
+
+  String get journeyId => journeyController.journey.id;
 
   bool get isInitial => path.type == Enum$PathType.INITIAL;
 
@@ -130,7 +145,7 @@ class PathController extends VoidSignal {
   Future<void> fetchMaterials() async {
     if (fetchingMaterials.value) return;
     fetchingMaterials.value = true;
-    final res = await Api.queries.materials(path.id, pagination);
+    final res = await Api.queries.materials(journeyId, path.id, pagination);
     _materials.addAll(res.items.map((e) => MaterialController(material: e)));
     pagination = pagination.copyWith(cursor: res.pageInfo.nextCursor);
     _pageInfo = res.pageInfo;

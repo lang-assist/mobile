@@ -1,4 +1,3 @@
-import 'package:api/api.dart';
 import 'package:assist_app/src/controllers/journey.dart';
 import 'package:assist_app/src/widgets/audio_player.dart';
 import 'package:assist_app/src/widgets/components/item_picture.dart';
@@ -121,7 +120,7 @@ class DocumentationExplanation extends StatelessWidget {
         return HtmlWidget("<html><body>${explanation.text}</body></html>");
       case Enum$UserDocExplanationType.picture:
         return ClipRRect(
-          borderRadius: AppDimensions.borderRadiusMedium,
+          borderRadius: AppSpacing.borderRadiusMedium,
           child: ItemPicture(pictureId: explanation.pictureId!),
         );
       case Enum$UserDocExplanationType.audio:
@@ -129,10 +128,7 @@ class DocumentationExplanation extends StatelessWidget {
           spacing: 16,
           children: [
             if (explanation.audioId != null)
-              SizedBox(
-                height: 40,
-                child: AudioPlayerWidget(audioId: explanation.audioId!),
-              ),
+              AudioPlayerWidget(audioId: explanation.audioId!),
             Expanded(child: HtmlWidget(explanation.text ?? "")),
           ],
         );

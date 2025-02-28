@@ -15,13 +15,16 @@ class ItemPicture extends StatefulWidget {
 class _ItemPictureState extends State<ItemPicture> {
   @override
   Widget build(BuildContext context) {
-    return FadeInImage(
-      placeholderErrorBuilder: (context, error, stackTrace) {
-        return const Center(child: CircularProgressIndicator.adaptive());
-      },
-      fit: BoxFit.cover,
-      image: itemPictureProvider(widget.pictureId),
-      placeholder: MemoryImage(Uint8List(0)),
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: FadeInImage(
+        placeholderErrorBuilder: (context, error, stackTrace) {
+          return const Center(child: CircularProgressIndicator.adaptive());
+        },
+        fit: BoxFit.cover,
+        image: itemPictureProvider(widget.pictureId),
+        placeholder: MemoryImage(Uint8List(0)),
+      ),
     );
   }
 }

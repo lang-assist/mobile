@@ -3,7 +3,6 @@ import 'package:assist_app/src/controllers/path.dart';
 import 'package:assist_app/src/routes.dart';
 import 'package:assist_utils/assist_utils.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:sign_flutter/sign_flutter.dart';
 import 'package:user_data/user_data.dart';
 
@@ -38,14 +37,14 @@ class _JourneyPageState extends State<JourneyPage> {
               items: [
                 AppButton(
                   onPressed: () async {
-                    await Api.mutations.genMaterial(
-                      Input$GenMaterialInput(
-                        journeyId: journey.id,
+                    // await Api.mutations.genMaterial(
+                    //   Input$GenMaterialInput(
+                    //     journeyId: journey.id,
 
-                        pathId: journey.paths.first.id,
-                        type: Enum$MaterialType.STORY,
-                      ),
-                    );
+                    //     pathId: journey.paths.first.id,
+                    //     type: Enum$MaterialType.STORY,
+                    //   ),
+                    // );
                   },
                   title: Text("Gen Story"),
                 ),
@@ -225,7 +224,6 @@ class __JoruneyPathState extends State<_JoruneyPath> with Slot {
 
 class _MaterialCard extends StatefulWidget {
   const _MaterialCard({
-    super.key,
     required this.material,
     this.hasArrow = true,
     this.height = 150,
@@ -239,8 +237,28 @@ class _MaterialCard extends StatefulWidget {
   State<_MaterialCard> createState() => __MaterialCardState();
 }
 
-class __MaterialCardState extends State<_MaterialCard> {
+class __MaterialCardState extends State<_MaterialCard> with Slot {
   bool get isCreating => widget.material.isCreating;
+
+  @override
+  void initState() {
+    super.initState();
+    if (isCreating) {
+      widget.material.fetchDetailed();
+    }
+    widget.material.addSlot(this);
+  }
+
+  @override
+  void dispose() {
+    widget.material.removeSlot(this);
+    super.dispose();
+  }
+
+  @override
+  void onValue(value) {
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {

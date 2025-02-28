@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:api/api.dart';
 import 'package:assist_app/src/controllers/journey.dart';
 import 'package:assist_app/src/controllers/path.dart';
 import 'package:assist_app/src/pages/content/material_page.dart';
@@ -10,13 +11,13 @@ import 'package:assist_utils/assist_utils.dart';
 import 'package:assist_app/src/pages/auth/sign_up_main_screen.dart';
 import 'package:assist_app/src/pages/home/home.dart';
 import 'package:assist_app/src/utils/device.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sign_flutter/sign_flutter.dart';
 import 'package:user_data/user_data.dart';
 import 'pages/home/journeys.dart';
 import 'pages/splash.dart';
+import 'pages/subs/subscriptions.dart';
 import 'utils/auth.dart';
 
 /// Rotalar 3 kategoriye ayrılır:
@@ -27,7 +28,7 @@ import 'utils/auth.dart';
 
 const notUnallowed = ["/auth"];
 
-const doesNotMatter = ["/feedback", "/welcome", "/theme"];
+const doesNotMatter = ["/feedback", "/welcome", "/theme", "/subscription"];
 
 const journeyUnallowed = ["/journeys", "/journeys/create"];
 
@@ -45,6 +46,7 @@ final Map<String, AppRoute> routes = {
   "/auth": AppRoute(builder: SignUpMainScreen.new, middlewares: {}),
   "/": AppRoute(builder: HomePage.new, middlewares: {}),
   "/theme": AppRoute(builder: ThemeShowcase.new, middlewares: {}),
+  "/subscription": AppRoute(builder: SubscriptionPage.new, middlewares: {}),
   "/journeys": AppRoute(builder: JourneysPage.new, middlewares: {}),
   "/journeys/create": AppRoute(builder: CreateJourneyPage.new, middlewares: {}),
   "/journeys/initial": AppRoute(builder: InitialTestPage.new, middlewares: {}),
@@ -57,6 +59,7 @@ final Map<String, AppRoute> routes = {
           final materialController = MaterialController(material: material);
           return materialController;
         } catch (e) {
+          logger.e("MATERIAL MIDDLEWARE ERROR $e");
           return redirect("/not-found");
         }
       },
@@ -90,6 +93,9 @@ FutureOr<String?> _initWith(
 }
 
 FutureOr<String?> splashLoad(String location) {
+  // if (location == "/subscription") {
+  //   return redirect(location, null);
+  // }
   if (location == "/welcome") {
     return redirect(location, null);
   }
@@ -156,7 +162,7 @@ FutureOr<String?> splashLoad(String location) {
 }
 
 final router = GoRouter(
-  initialLocation: "/welcome",
+  initialLocation: "/",
   navigatorKey: ThemeProvider.instance.navigatorKey,
   routes:
       [

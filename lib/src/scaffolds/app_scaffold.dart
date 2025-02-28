@@ -154,7 +154,9 @@ class _UserScaffoldState extends State<UserScaffold>
               AppButton(
                 variant: AppButtonVariant.outlined,
                 prefixIcon: Icon(Icons.settings_outlined),
-                onPressed: () {},
+                onPressed: () async {
+                  await context.push('/subscription');
+                },
                 title: Text("Settings"),
               ),
               AppButton(

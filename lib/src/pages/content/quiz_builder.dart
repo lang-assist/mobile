@@ -9,23 +9,83 @@ import 'package:assist_app/src/widgets/components/record.dart';
 import 'package:assist_app/src/widgets/components/term_text.dart';
 import 'package:assist_utils/assist_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:record/record.dart';
 import 'package:sign_flutter/sign_flutter.dart';
 import 'package:user_data/user_data.dart';
+
+import '../../controllers/quiz.dart';
+
+// class SendingAnswer<T> {
+//   final Duration duration;
+//   final T answer;
+//   final List<String>? behaviors;
+
+//   SendingAnswer._({
+//     required this.duration,
+//     required this.answer,
+//     this.behaviors,
+//   });
+
+//   static SendingAnswer<String> text(
+//     String answer,
+//     Duration duration, {
+//     List<String>? behaviors,
+//   }) {
+//     return SendingAnswer._(
+//       duration: duration,
+//       answer: answer,
+//       behaviors: behaviors,
+//     );
+//   }
+
+//   static SendingAnswer<List<String>> list(
+//     List<String> answer,
+//     Duration duration, {
+//     List<String>? behaviors,
+//   }) {
+//     return SendingAnswer._(
+//       duration: duration,
+//       answer: answer,
+//       behaviors: behaviors,
+//     );
+//   }
+
+//   static SendingAnswer<List<List<String>>> matches(
+//     List<List<String>> answer,
+//     Duration duration, {
+//     List<String>? behaviors,
+//   }) {
+//     return SendingAnswer._(
+//       duration: duration,
+//       answer: answer,
+//       behaviors: behaviors,
+//     );
+//   }
+
+//   static SendingAnswer<bool> boolean(
+//     bool answer,
+//     Duration duration, {
+//     List<String>? behaviors,
+//   }) {
+//     return SendingAnswer._(
+//       duration: duration,
+//       answer: answer,
+//       behaviors: behaviors,
+//     );
+//   }
+// }
 
 class QuizBuilder extends StatefulWidget {
   const QuizBuilder({
     super.key,
     required this.material,
-    required this.onAnswer,
     required this.onValid,
     required this.onSubmit,
     this.padding = EdgeInsets.zero,
   });
 
   final MaterialController material;
-
-  final OnAnswer onAnswer;
 
   final OnValid onValid;
 
@@ -37,102 +97,73 @@ class QuizBuilder extends StatefulWidget {
   State<QuizBuilder> createState() => _QuizBuilderState();
 }
 
-typedef OnAnswer = void Function(dynamic answer);
+typedef OnAnswer = void Function(Map<String, dynamic>? answer);
 
 typedef OnValid = void Function(bool valid);
 
 typedef QuizBuilderConstructor =
     Widget Function({
       Key? key,
-      required Fragment$QuizQuestion question,
-      required OnAnswer onAnswer,
-      required OnValid onValid,
-      required List<Fragment$AIFeedback> aiFeedbacks,
-      dynamic answer,
+      required QuestionController controller,
       EdgeInsets? padding,
     });
 
-class _QuizBuilderState extends State<QuizBuilder> {
+class _QuizBuilderState extends State<QuizBuilder> with WidgetsBindingObserver {
   final pageController = PageController();
-  final currentQuestion = Signal<int>(0);
 
-  Fragment$QuizDetails get quiz =>
-      widget.material.details as Fragment$QuizDetails;
+  late final quizController = QuizController(
+    questions: (widget.material.details as Fragment$QuizDetails).questions,
+    aiFeedbacks: widget.material.feedbacks,
+    answer: widget.material.userAnswer,
+  );
 
   @override
   void initState() {
-    validStates.value = List.generate(
-      quiz.questions.length,
-      (_) => false || widget.material.userAnswer != null,
-    );
-    answers.value = {};
+    WidgetsBinding.instance.addObserver(this);
     super.initState();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
-  final answers = SignalMap<String, dynamic>({});
+  List<Fragment$QuizPrelude>? get preludes =>
+      (widget.material.details as Fragment$QuizDetails).preludes;
 
-  final validStates = SignalList<bool>([]);
-
-  OnAnswer onAnswer(int index) {
-    final q = quiz.questions[index];
-    return (answer) {
-      answers[q.id] = answer;
-    };
-  }
-
-  OnValid onValid(int index) {
-    return (valid) {
-      validStates[index] = valid;
-    };
-  }
-
-  List<Fragment$AIFeedback> aiFeedbacks(Fragment$QuizQuestion question) =>
-      widget.material.feedbacks
-          .where((e) => e.feedback.question == question.id)
-          .toList();
-
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {}
 
   @override
   Widget build(BuildContext context) {
     final children = <Widget>[];
 
-    for (var i = 0; i < quiz.questions.length; i++) {
-      final question = quiz.questions[i];
-      final key = ValueKey("${quiz.hashCode}-${question.hashCode}");
-      final aiFeedbacks = this.aiFeedbacks(question);
+    for (var i = 0; i < quizController.questions.length; i++) {
+      final question = quizController.questions[i];
+      final key = ValueKey("${quizController.hashCode}-${question.hashCode}");
 
       children.add(
         QuestionBuilder(
           key: key,
-          question: question,
-          onAnswer: onAnswer(i),
-          onValid: onValid(i),
-          aiFeedbacks: aiFeedbacks,
-          answer: widget.material.userAnswer?.answers[question.id],
+          controller: quizController.controllers[i],
           padding: widget.padding,
         ),
       );
-
     }
 
-    for (var i = 0; i < quiz.questions.length; i++) {
-      final q = quiz.questions[i];
+    for (var i = 0; i < quizController.questions.length; i++) {
+      final q = quizController.questions[i];
 
       children[i] = AppForm(
         readOnly: widget.material.userAnswer != null,
         child: SingleChildScrollView(
           child: Column(
             children: [
-
               if (q.preludeID != null && q.preludeID!.isNotEmpty)
                 Builder(
                   builder: (context) {
-                    final preludeIndex = quiz.preludes!.indexWhere(
+                    final preludeIndex = preludes!.indexWhere(
                       (e) => e.id == q.preludeID,
                     );
 
@@ -140,14 +171,14 @@ class _QuizBuilderState extends State<QuizBuilder> {
                       return const SizedBox.shrink();
                     }
 
-                    final prelude = quiz.preludes![preludeIndex];
+                    final prelude = preludes![preludeIndex];
 
                     return Padding(
                       padding: ResponsiveConfig.of(context).pagePadding,
                       child: Column(
                         children: [
                           for (var part in prelude.parts)
-                            if (part.type == Enum$QuizPreludeItemType.STORY)
+                            if (part.type == Enum$QuizPreludeItemType.TEXT)
                               TermsText(part.content!)
                             else if (part.type ==
                                 Enum$QuizPreludeItemType.PICTURE)
@@ -197,8 +228,12 @@ class _QuizBuilderState extends State<QuizBuilder> {
                 padding: const EdgeInsets.all(8.0),
                 child: Center(child: children[i]),
               ),
-              if (aiFeedbacks(q).isNotEmpty) ...[
-                for (var feedback in aiFeedbacks(q))
+              if (quizController
+                  .currentQuestionController
+                  .aiFeedbacks
+                  .isNotEmpty) ...[
+                for (var feedback
+                    in quizController.currentQuestionController.aiFeedbacks)
                   AIFeedbackWidget(feedback: feedback),
                 SizedBox(height: 60),
               ],
@@ -218,35 +253,45 @@ class _QuizBuilderState extends State<QuizBuilder> {
             controller: pageController,
             physics: const NeverScrollableScrollPhysics(),
             onPageChanged: (index) {
-              currentQuestion.value = index;
+              quizController.currentQuestion.value =
+                  quizController.questions[index].id;
             },
             children: children,
           ),
         ),
-        MultiSignal([validStates, currentQuestion]).builder((_) {
-          return Positioned(
-            bottom: pagePadding.bottom,
-            left: pagePadding.left,
-            right: pagePadding.right,
-            child: AppButton(
-              isActive: validStates[currentQuestion.value],
-              onPressed: () async {
-                if (currentQuestion.value == validStates.value.length - 1) {
-                  await widget.onSubmit(answers.value);
-                } else {
-                  pageController.nextPage(
-                    duration: animationDuration,
-                    curve: Curves.easeInOut,
-                  );
-                }
-              },
-              title: Text(
-                currentQuestion.value == validStates.value.length - 1
-                    ? "Submit"
-                    : "Next",
+        quizController.currentQuestion.builder((_) {
+          final controller = quizController.currentQuestionController;
+          return controller.builder((_) {
+            return Positioned(
+              bottom: pagePadding.bottom,
+              left: pagePadding.left,
+              right: pagePadding.right,
+              child: AppButton(
+                isActive: controller.valid,
+                onPressed: () async {
+                  if (quizController.currentQuestionIndex ==
+                      quizController.questions.length - 1) {
+                    if (quizController.allIsValid) {
+                      widget.onSubmit(quizController.buildAnswer());
+                    } else {
+                      return;
+                    }
+                  } else {
+                    pageController.nextPage(
+                      duration: animationDuration,
+                      curve: Curves.easeInOut,
+                    );
+                  }
+                },
+                title: Text(
+                  quizController.currentQuestionIndex ==
+                          quizController.questions.length - 1
+                      ? "Submit"
+                      : "Next",
+                ),
               ),
-            ),
-          );
+            );
+          });
         }),
       ],
     );
@@ -254,21 +299,9 @@ class _QuizBuilderState extends State<QuizBuilder> {
 }
 
 class QuestionBuilder extends StatefulWidget {
-  const QuestionBuilder({
-    super.key,
-    required this.question,
-    required this.onAnswer,
-    required this.onValid,
-    required this.aiFeedbacks,
-    this.answer,
-    this.padding,
-  });
+  const QuestionBuilder({super.key, required this.controller, this.padding});
 
-  final Fragment$QuizQuestion question;
-  final OnAnswer onAnswer;
-  final OnValid onValid;
-  final List<Fragment$AIFeedback> aiFeedbacks;
-  final dynamic answer;
+  final QuestionController controller;
   final EdgeInsets? padding;
 
   @override
@@ -291,52 +324,38 @@ class _QuestionBuilderState extends State<QuestionBuilder> {
 
   @override
   Widget build(BuildContext context) {
-    final constructor = constructors[widget.question.type];
+    final constructor = constructors[widget.controller.question.type];
     if (constructor == null) {
-      return Text("Question type not supported: ${widget.question.type}");
+      return Text(
+        "Question type not supported: ${widget.controller.question.type}",
+      );
     }
 
-    return constructor(
-      question: widget.question,
-      onAnswer: widget.onAnswer,
-      onValid: widget.onValid,
-      aiFeedbacks: widget.aiFeedbacks,
-      answer: widget.answer,
-      padding: widget.padding,
-    );
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!widget.controller.behaviors.contains("question_loaded")) {
+        widget.controller.addBehavior("question_loaded");
+      }
+    });
+
+    return constructor(controller: widget.controller, padding: widget.padding);
   }
 }
 
 class _TrueFalseQuestion extends AppFormField<bool?> {
-  _TrueFalseQuestion({
-    super.key,
-    required this.question,
-    required this.onAnswer,
-    required this.onValid,
-    required this.aiFeedbacks,
-    this.padding,
-    this.answer,
-  }) : super(
-         validator: (value) {
-           if (value == null) {
-             return "Please select an answer";
-           }
+  _TrueFalseQuestion({super.key, required this.controller, this.padding})
+    : super(
+        validator: (value) {
+          if (value == null) {
+            return "Please select an answer";
+          }
 
-           return null;
-         },
-       );
+          return null;
+        },
+      );
 
-  final Fragment$QuizQuestion question;
-
-  final OnAnswer onAnswer;
-
-  final OnValid onValid;
+  final QuestionController controller;
 
   final EdgeInsets? padding;
-
-  final List<Fragment$AIFeedback> aiFeedbacks;
-
-  final dynamic answer;
 
   @override
   AppFormFieldState<bool?, _TrueFalseQuestion> createState() =>
@@ -346,8 +365,22 @@ class _TrueFalseQuestion extends AppFormField<bool?> {
 class __TrueFalseQuestionState
     extends AppFormFieldState<bool?, _TrueFalseQuestion> {
   late final selectedChoices = SignalList<String>(
-    widget.answer == null ? [] : [widget.answer],
+    widget.controller.existingAnswer == null
+        ? []
+        : [widget.controller.existingAnswer.toString()],
   );
+
+  Fragment$QuizQuestion get question => widget.controller.question;
+
+  setAnswer() {
+    if (selectedChoices.value.isEmpty) {
+      widget.controller.answer = null;
+      widget.controller.valid = false;
+    } else {
+      widget.controller.answer = selectedChoices.value.first == "true";
+      widget.controller.valid = true;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -365,7 +398,7 @@ class __TrueFalseQuestionState
         spacing: 16,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          TermsText(widget.question.question),
+          TermsText(question.question),
           Row(
             spacing: 16,
             children: [
@@ -373,13 +406,11 @@ class __TrueFalseQuestionState
                 child: _ChoiceCard(
                   readOnly: readOnly,
                   onTap: () {
-                    if (selectedChoices.value.isEmpty) {
-                      widget.onAnswer(null);
-                      widget.onValid(false);
-                    } else {
-                      widget.onAnswer("true");
-                      widget.onValid(true);
+                    if (readOnly) {
+                      return;
                     }
+
+                    setAnswer();
                   },
                   item: Fragment$QuestionItem(
                     id: "true",
@@ -398,13 +429,7 @@ class __TrueFalseQuestionState
                       return;
                     }
 
-                    if (selectedChoices.value.isEmpty) {
-                      widget.onAnswer(null);
-                      widget.onValid(false);
-                    } else {
-                      widget.onAnswer("false");
-                      widget.onValid(true);
-                    }
+                    setAnswer();
                   },
                   item: Fragment$QuestionItem(
                     id: "false",
@@ -430,18 +455,22 @@ class __TrueFalseQuestionState
   String get name => widget.key.toString();
 }
 
-List<Matched> _parseMatchingAnswer(String answer) {
+List<Matched> _parseMatchingAnswer(
+  Fragment$QuizQuestion question,
+  List<dynamic> answer,
+) {
   int selectedIndex = 0;
 
-  return answer
-      .split("\n")
-      .map((e) => e.split("->").map((e) => int.parse(e)).toList())
-      .toList()
-      .map<Matched>((e) {
-        final color = _colors.keys.toList()[(selectedIndex++) % _colors.length];
-        return (e, color);
-      })
-      .toList();
+  return answer.map<Matched>((e) {
+    final leftName = e[0];
+    final rightName = e[1];
+    final leftIndex = question.items!.indexWhere((e) => e.id == leftName);
+    final rightIndex = question.secondItems!.indexWhere(
+      (e) => e.id == rightName,
+    );
+    final color = _colors.keys.toList()[(selectedIndex++) % _colors.length];
+    return ([leftIndex, rightIndex], color);
+  }).toList();
 }
 
 final _colors = {
@@ -467,39 +496,24 @@ final _colors = {
 };
 
 class _MatchingQuestion extends AppFormField<List<Matched>?> {
-  _MatchingQuestion({
-    super.key,
-    required this.question,
-    required this.onAnswer,
-    required this.onValid,
-    this.padding,
-    required this.aiFeedbacks,
-    this.answer,
-  }) : super(
-         validator: (value) {
-           if (value == null) {
-             return "Please select an answer";
-           }
+  _MatchingQuestion({super.key, required this.controller, this.padding})
+    : super(
+        validator: (value) {
+          if (value == null) {
+            return "Please select an answer";
+          }
 
-           if (value.length != question.items!.length) {
-             return "Please match all items";
-           }
+          if (value.length != controller.question.items!.length) {
+            return "Please match all items";
+          }
 
-           return null;
-         },
-       );
+          return null;
+        },
+      );
 
-  final Fragment$QuizQuestion question;
-
-  final OnAnswer onAnswer;
-
-  final OnValid onValid;
+  final QuestionController controller;
 
   final EdgeInsets? padding;
-
-  final List<Fragment$AIFeedback> aiFeedbacks;
-
-  final dynamic answer;
 
   @override
   AppFormFieldState<List<Matched>?, _MatchingQuestion> createState() =>
@@ -521,9 +535,12 @@ class __MatchingQuestionState
   @override
   void initState() {
     matches = SignalList(
-      widget.answer == null
+      widget.controller.existingAnswer == null
           ? []
-          : _parseMatchingAnswer(widget.answer as String),
+          : _parseMatchingAnswer(
+            widget.controller.question,
+            widget.controller.existingAnswer!,
+          ),
     );
     super.initState();
   }
@@ -564,16 +581,17 @@ class __MatchingQuestionState
         currentSelectedRight.value = null;
         value = matches.value;
 
-        final answer = StringBuffer();
+        final answer = <List<String>>[];
 
         for (var i = 0; i < matches.value.length; i++) {
-          answer.writeln(
-            "${secondItems[matches.value[i].$1[1]].id} -> ${items[matches.value[i].$1[0]].id}",
-          );
+          answer.add([
+            items[matches.value[i].$1[0]].id,
+            secondItems[matches.value[i].$1[1]].id,
+          ]);
         }
 
-        widget.onAnswer(answer.toString());
-        widget.onValid(matches.value.length == items.length);
+        widget.controller.answer = answer;
+        widget.controller.valid = matches.value.length == items.length;
       }
     }
   }
@@ -645,16 +663,18 @@ class __MatchingQuestionState
     return _colors[color];
   }
 
-  late List<Fragment$QuestionItem> items = widget.question.items!..shuffle();
+  Fragment$QuizQuestion get question => widget.controller.question;
+
+  late List<Fragment$QuestionItem> items = question.items!..shuffle();
   late List<Fragment$QuestionItem> secondItems =
-      widget.question.secondItems!..shuffle();
+      question.secondItems!..shuffle();
 
   @override
   Widget build(BuildContext context) {
     return Column(
       spacing: 16,
       children: [
-        TermsText(widget.question.question),
+        TermsText(question.question),
         matches.builder((_) {
           return SizedBox(
             width: double.infinity,
@@ -853,34 +873,19 @@ class _MatchesPainter extends CustomPainter {
 }
 
 class _ChoiceQuestion extends AppFormField<int?> {
-  _ChoiceQuestion({
-    super.key,
-    required this.question,
-    required this.onAnswer,
-    required this.onValid,
-    required this.aiFeedbacks,
-    this.padding,
-    this.answer,
-  }) : super(
-         validator: (value) {
-           if (value == null) {
-             return "Please select an answer";
-           }
-           return null;
-         },
-       );
+  _ChoiceQuestion({super.key, required this.controller, this.padding})
+    : super(
+        validator: (value) {
+          if (value == null) {
+            return "Please select an answer";
+          }
+          return null;
+        },
+      );
 
-  final Fragment$QuizQuestion question;
-
-  final OnAnswer onAnswer;
-
-  final OnValid onValid;
+  final QuestionController controller;
 
   final EdgeInsets? padding;
-
-  final List<Fragment$AIFeedback> aiFeedbacks;
-
-  final dynamic answer;
 
   @override
   AppFormFieldState<int?, _ChoiceQuestion> createState() =>
@@ -900,7 +905,9 @@ class __ChoiceQuestionState extends AppFormFieldState<int?, _ChoiceQuestion> {
   //   widget.onValid(true);
   // }
 
-  List<Fragment$QuestionItem> get choices => widget.question.choices!;
+  Fragment$QuizQuestion get question => widget.controller.question;
+
+  List<Fragment$QuestionItem> get choices => question.choices!;
 
   bool get hasPicture => choices.any((e) => e.hasPicture);
 
@@ -919,8 +926,8 @@ class __ChoiceQuestionState extends AppFormFieldState<int?, _ChoiceQuestion> {
     if (readOnly) {
       return;
     }
-    widget.onAnswer(selectedChoices.value.firstOrNull);
-    widget.onValid(selectedChoices.value.isNotEmpty);
+    widget.controller.answer = selectedChoices.value.firstOrNull;
+    widget.controller.valid = selectedChoices.value.isNotEmpty;
   }
 
   @override
@@ -929,7 +936,7 @@ class __ChoiceQuestionState extends AppFormFieldState<int?, _ChoiceQuestion> {
       spacing: 16,
       children: [
         TermsText(
-          widget.question.question,
+          question.question,
           style: Theme.of(context).textTheme.bodyLarge,
         ),
         selectedChoices.builder((s) {
@@ -953,7 +960,7 @@ class __ChoiceQuestionState extends AppFormFieldState<int?, _ChoiceQuestion> {
             ),
           );
         }),
-        for (var feedback in widget.aiFeedbacks)
+        for (var feedback in widget.controller.aiFeedbacks)
           AIFeedbackWidget(feedback: feedback),
       ],
     );
@@ -961,35 +968,20 @@ class __ChoiceQuestionState extends AppFormFieldState<int?, _ChoiceQuestion> {
 }
 
 class _MultiChoiceQuestion extends AppFormField<List<String>?> {
-  _MultiChoiceQuestion({
-    super.key,
-    required this.question,
-    required this.onAnswer,
-    required this.onValid,
-    this.padding,
-    required this.aiFeedbacks,
-    this.answer,
-  }) : super(
-         validator: (value) {
-           if (value == null) {
-             return "Please select an answer";
-           }
+  _MultiChoiceQuestion({super.key, required this.controller, this.padding})
+    : super(
+        validator: (value) {
+          if (value == null) {
+            return "Please select an answer";
+          }
 
-           return null;
-         },
-       );
+          return null;
+        },
+      );
 
-  final Fragment$QuizQuestion question;
-
-  final OnAnswer onAnswer;
-
-  final OnValid onValid;
+  final QuestionController controller;
 
   final EdgeInsets? padding;
-
-  final List<Fragment$AIFeedback> aiFeedbacks;
-
-  final dynamic answer;
 
   @override
   AppFormFieldState<List<String>?, _MultiChoiceQuestion> createState() =>
@@ -999,13 +991,15 @@ class _MultiChoiceQuestion extends AppFormField<List<String>?> {
 class __MultiChoiceQuestionState
     extends AppFormFieldState<List<String>?, _MultiChoiceQuestion> {
   late final selectedChoices = SignalList<String>(
-    (widget.answer as List? ?? []).cast<String>(),
+    (widget.controller.existingAnswer as List? ?? []).cast<String>(),
   );
 
   @override
   String get name => widget.key.toString();
 
-  List<Fragment$QuestionItem> get choices => widget.question.choices!;
+  Fragment$QuizQuestion get question => widget.controller.question;
+
+  List<Fragment$QuestionItem> get choices => question.choices!;
 
   bool get hasPicture => choices.any((e) => e.hasPicture);
 
@@ -1015,7 +1009,7 @@ class __MultiChoiceQuestionState
       spacing: 16,
       children: [
         TermsText(
-          widget.question.question,
+          question.question,
           style: Theme.of(context).textTheme.bodyLarge,
         ),
         SizedBox(
@@ -1033,8 +1027,8 @@ class __MultiChoiceQuestionState
                   multiSelect: true,
                   item: choices[i],
                   onTap: () {
-                    widget.onAnswer(selectedChoices.value);
-                    widget.onValid(selectedChoices.value.isNotEmpty);
+                    widget.controller.answer = selectedChoices.value;
+                    widget.controller.valid = selectedChoices.value.isNotEmpty;
                   },
                   selectedChoices: selectedChoices,
                 ),
@@ -1047,35 +1041,20 @@ class __MultiChoiceQuestionState
 }
 
 class _FillWriteQuestion extends AppFormField<String?> {
-  _FillWriteQuestion({
-    super.key,
-    required this.question,
-    required this.onAnswer,
-    required this.onValid,
-    this.padding,
-    required this.aiFeedbacks,
-    this.answer,
-  }) : super(
-         validator: (value) {
-           if (value == null) {
-             return "Please select an answer";
-           }
+  _FillWriteQuestion({super.key, required this.controller, this.padding})
+    : super(
+        validator: (value) {
+          if (value == null) {
+            return "Please select an answer";
+          }
 
-           return null;
-         },
-       );
+          return null;
+        },
+      );
 
-  final Fragment$QuizQuestion question;
-
-  final OnAnswer onAnswer;
-
-  final OnValid onValid;
+  final QuestionController controller;
 
   final EdgeInsets? padding;
-
-  final List<Fragment$AIFeedback> aiFeedbacks;
-
-  final dynamic answer;
 
   @override
   AppFormFieldState<String?, _FillWriteQuestion> createState() =>
@@ -1086,7 +1065,10 @@ class __FillWriteQuestionState
     extends AppFormFieldState<String?, _FillWriteQuestion> {
   final List<LinguisticUnit> _blanks = [];
 
-  late final LinguisticUnitSet question = widget.question.question;
+  Fragment$QuizQuestion get question => widget.controller.question;
+
+  late final LinguisticUnitSet questionSet =
+      question.question.forBlankQuestion();
 
   // void _buildTerms() {
   //   _blanks = [];
@@ -1151,19 +1133,27 @@ class __FillWriteQuestionState
 
   @override
   void initState() {
-    for (var i = 0; i < question.units.length; i++) {
-      // final unit = question.units[i];
-      // if (unit.type == LinguisticUnitType.BLANK) {
-      //   _blanks.add(unit);
-      // }
-      // TODO: implement this
+    for (var i = 0; i < questionSet.units.length; i++) {
+      final unit = questionSet.units[i];
+      if (unit.blankId != null) {
+        _blanks.add(unit);
+      }
     }
+
+    if (question.choices != null) {
+      if (_blanks.length == 1) {
+        SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+          _blanks.first.focusNode!.requestFocus();
+        });
+      }
+    }
+
     selectedChoices = SignalList([]);
 
-    if (widget.answer != null) {
-      final answer = widget.answer as Map<String, dynamic>;
+    if (widget.controller.existingAnswer != null) {
+      final answer = widget.controller.existingAnswer as Map<String, dynamic>;
       for (var key in answer.keys) {
-        if (widget.question.choices != null) {
+        if (question.choices != null) {
           final choice = answer[key];
           selectedChoices.value.add(choice);
         } else {
@@ -1178,27 +1168,30 @@ class __FillWriteQuestionState
 
   late final SignalList<String> selectedChoices;
 
-  void onValueChange(String? value, int index) {
-    if (readOnly) {
-      return;
-    }
-    selectedChoices.value[index] = value ?? "";
-    widget.onAnswer(selectedChoices.value.join(","));
-    widget.onValid(selectedChoices.value.isNotEmpty);
+  final _answer = Signal<Map<String, String>>({});
+
+  void _setAnswer(String blankId, String value) {
+    _answer.value[blankId] = value;
+    widget.controller.answer = _answer.value;
+    widget.controller.valid = _blanks.every(
+      (e) =>
+          _answer.value[e.blankId!] != null &&
+          _answer.value[e.blankId!]!.isNotEmpty,
+    );
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    print("ANSWER: ${widget.answer}");
     return Padding(
       padding: widget.padding ?? EdgeInsets.zero,
       child: Column(
         spacing: 16,
         children: [
           Text("Please fill in the blank"),
-          TermsText(question, style: Theme.of(context).textTheme.bodyLarge),
+          TermsText(questionSet, style: Theme.of(context).textTheme.bodyLarge),
 
-          if (widget.question.choices == null)
+          if (question.choices == null)
             for (var i = 0; i < _blanks.length; i++)
               AppTextFormField(
                 key: Key("blank_$i"),
@@ -1206,41 +1199,44 @@ class __FillWriteQuestionState
                 controller: _blanks[i].controller,
                 onChanged: (value) {
                   _blanks[i].text = value;
-                  setState(() {});
-                  widget.onAnswer({_blanks[i].blankId: value});
-                  widget.onValid(true);
+                  _setAnswer(_blanks[i].blankId!, value);
                 },
-                label: _blanks.length > 1 ? "(Blank ${i + 1})" : "Blank",
+                label: _blanks.length > 1 ? "Blank ${i + 1}" : "Blank",
               )
           else
             Builder(
               builder: (context) {
-                return Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
-                  alignment: WrapAlignment.start,
-                  crossAxisAlignment: WrapCrossAlignment.start,
-                  runAlignment: WrapAlignment.start,
-                  children: [
-                    for (var i = 0; i < widget.question.choices!.length; i++)
-                      _ChoiceCard(
-                        readOnly: readOnly,
-                        onTap: () {
-                          if (selectedChoices.isNotEmpty) {
-                            widget.onAnswer({"blank": selectedChoices.first});
-                            print({"blank": selectedChoices.first});
-                            widget.onValid(true);
-                          } else {
-                            widget.onAnswer(null);
-                            widget.onValid(false);
-                          }
-                        },
-                        key: Key("choice_${widget.question.choices![i].id}"),
-                        multiSelect: false,
-                        item: widget.question.choices![i],
-                        selectedChoices: selectedChoices,
-                      ),
-                  ],
+                return Focus(
+                  canRequestFocus: true,
+                  focusNode: _blanks.first.focusNode,
+                  child: Wrap(
+                    spacing: 16,
+                    runSpacing: 16,
+                    alignment: WrapAlignment.start,
+                    crossAxisAlignment: WrapCrossAlignment.start,
+                    runAlignment: WrapAlignment.start,
+                    children: [
+                      for (var i = 0; i < question.choices!.length; i++)
+                        _ChoiceCard(
+                          readOnly: readOnly,
+                          onTap: () {
+                            if (selectedChoices.isNotEmpty) {
+                              widget.controller.answer = {
+                                _blanks.first.blankId!: selectedChoices.first,
+                              };
+                              widget.controller.valid = true;
+                            } else {
+                              widget.controller.answer = null;
+                              widget.controller.valid = false;
+                            }
+                          },
+                          key: Key("choice_${question.choices![i].id}"),
+                          multiSelect: false,
+                          item: question.choices![i],
+                          selectedChoices: selectedChoices,
+                        ),
+                    ],
+                  ),
                 );
               },
             ),
@@ -1251,34 +1247,19 @@ class __FillWriteQuestionState
 }
 
 class _OrderingQuestion extends AppFormField<List<int>?> {
-  _OrderingQuestion({
-    super.key,
-    required this.question,
-    required this.onAnswer,
-    required this.onValid,
-    this.padding,
-    required this.aiFeedbacks,
-    this.answer,
-  }) : super(
-         validator: (value) {
-           if (value == null) {
-             return "Please select an answer";
-           }
-           return null;
-         },
-       );
+  _OrderingQuestion({super.key, required this.controller, this.padding})
+    : super(
+        validator: (value) {
+          if (value == null) {
+            return "Please select an answer";
+          }
+          return null;
+        },
+      );
 
-  final Fragment$QuizQuestion question;
-
-  final OnAnswer onAnswer;
-
-  final OnValid onValid;
+  final QuestionController controller;
 
   final EdgeInsets? padding;
-
-  final List<Fragment$AIFeedback> aiFeedbacks;
-
-  final dynamic answer;
 
   @override
   AppFormFieldState<List<int>?, _OrderingQuestion> createState() =>
@@ -1290,23 +1271,25 @@ class __OrderingQuestionState
   @override
   String get name => widget.key.toString();
 
+  Fragment$QuizQuestion get question => widget.controller.question;
+
   final selectedChoices = SignalList<Fragment$QuestionItem>([]);
   late final unselectedChoices = SignalList<Fragment$QuestionItem>(
-    widget.question.items!.toList(),
+    question.choices!.toList(),
   );
 
   void select(Fragment$QuestionItem item) {
     selectedChoices.add(item);
     unselectedChoices.remove(item);
-    widget.onAnswer(selectedChoices.value.map((e) => e.id).toList());
-    widget.onValid(selectedChoices.value.isNotEmpty);
+    widget.controller.answer = selectedChoices.value.map((e) => e.id).toList();
+    widget.controller.valid = selectedChoices.value.isNotEmpty;
   }
 
   void unselect(Fragment$QuestionItem item) {
     selectedChoices.remove(item);
     unselectedChoices.add(item);
-    widget.onAnswer(selectedChoices.value.map((e) => e.id).toList());
-    widget.onValid(selectedChoices.value.isNotEmpty);
+    widget.controller.answer = selectedChoices.value.map((e) => e.id).toList();
+    widget.controller.valid = selectedChoices.value.isNotEmpty;
   }
 
   @override
@@ -1315,7 +1298,7 @@ class __OrderingQuestionState
       spacing: 16,
       children: [
         TermsText(
-          widget.question.question,
+          question.question,
           style: Theme.of(context).textTheme.bodyLarge,
         ),
 
@@ -1366,34 +1349,20 @@ class __OrderingQuestionState
 }
 
 class _TextInputWrite extends StatefulWidget {
-  const _TextInputWrite({
-    super.key,
-    required this.question,
-    required this.onAnswer,
-    required this.onValid,
-    this.padding,
-    required this.aiFeedbacks,
-    this.answer,
-  });
+  const _TextInputWrite({super.key, required this.controller, this.padding});
 
-  final Fragment$QuizQuestion question;
-
-  final OnAnswer onAnswer;
-
-  final OnValid onValid;
+  final QuestionController controller;
 
   final EdgeInsets? padding;
-
-  final List<Fragment$AIFeedback> aiFeedbacks;
-
-  final dynamic answer;
 
   @override
   State<_TextInputWrite> createState() => __TextInputWriteState();
 }
 
 class __TextInputWriteState extends State<_TextInputWrite> {
-  late final controller = TextEditingController(text: widget.answer);
+  late final controller = TextEditingController(text: widget.controller.answer);
+
+  Fragment$QuizQuestion get question => widget.controller.question;
 
   @override
   Widget build(BuildContext context) {
@@ -1406,7 +1375,7 @@ class __TextInputWriteState extends State<_TextInputWrite> {
           spacing: 16,
           children: [
             TermsText(
-              widget.question.question,
+              question.question,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
             AppTextFormField(
@@ -1420,8 +1389,8 @@ class __TextInputWriteState extends State<_TextInputWrite> {
               minLines: 3,
               maxLines: 10,
               onChanged: (value) {
-                widget.onAnswer(value);
-                widget.onValid(value.isNotEmpty);
+                widget.controller.answer = value;
+                widget.controller.valid = value.isNotEmpty;
               },
             ),
           ],
@@ -1432,34 +1401,19 @@ class __TextInputWriteState extends State<_TextInputWrite> {
 }
 
 class _RecordQuestion extends AppFormField<String?> {
-  _RecordQuestion({
-    super.key,
-    required this.question,
-    required this.onAnswer,
-    required this.onValid,
-    required this.aiFeedbacks,
-    this.answer,
-    this.padding,
-  }) : super(
-         validator: (value) {
-           if (value == null) {
-             return "Please select an answer";
-           }
-           return null;
-         },
-       );
+  _RecordQuestion({super.key, required this.controller, this.padding})
+    : super(
+        validator: (value) {
+          if (value == null) {
+            return "Please select an answer";
+          }
+          return null;
+        },
+      );
 
-  final Fragment$QuizQuestion question;
-
-  final OnAnswer onAnswer;
-
-  final OnValid onValid;
+  final QuestionController controller;
 
   final EdgeInsets? padding;
-
-  final List<Fragment$AIFeedback> aiFeedbacks;
-
-  final dynamic answer;
 
   @override
   AppFormFieldState<String?, _RecordQuestion> createState() =>
@@ -1476,6 +1430,8 @@ class __RecordQuestionState
   final recording = Signal<bool>(false);
   final cancelling = Signal<bool>(false);
 
+  Fragment$QuizQuestion get question => widget.controller.question;
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -1484,7 +1440,7 @@ class __RecordQuestionState
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           TermsText(
-            widget.question.question,
+            question.question,
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           SizedBox(
@@ -1494,8 +1450,8 @@ class __RecordQuestionState
               size: 45,
               filled: true,
               onRecordComplete: (value) {
-                widget.onAnswer(value);
-                widget.onValid(value != null);
+                widget.controller.answer = value;
+                widget.controller.valid = value != null;
               },
               onAmplitudeChanged: (amplitude) {
                 amplitudes.add(amplitude);
@@ -1505,9 +1461,15 @@ class __RecordQuestionState
               },
               onRecordStart: () {
                 recording.value = true;
+                widget.controller.answer = null;
+                widget.controller.valid = false;
+                widget.controller.addBehavior("record_started");
               },
               onRecordCancel: () {
                 recording.value = false;
+                widget.controller.answer = null;
+                widget.controller.valid = false;
+                widget.controller.addBehavior("record_canceled");
               },
             ),
           ),
@@ -1536,7 +1498,6 @@ class _ChoiceCard extends StatefulWidget {
     required this.item,
     required this.selectedChoices,
     this.multiSelect = false,
-    this.selectedColor,
     this.onTap,
     this.readOnly = false,
   });
@@ -1544,7 +1505,6 @@ class _ChoiceCard extends StatefulWidget {
   final Fragment$QuestionItem item;
   final SignalList<String> selectedChoices;
   final bool multiSelect;
-  final Color? selectedColor;
   final VoidCallback? onTap;
   final bool readOnly;
 
@@ -1611,7 +1571,7 @@ class __ChoiceCardState extends State<_ChoiceCard> with Slot {
       child = SizedBox(
         width: 200,
         child: ClipRRect(
-          borderRadius: AppDimensions.borderRadiusMedium,
+          borderRadius: AppSpacing.borderRadiusMedium,
           child: AspectRatio(
             aspectRatio: 4 / 3,
             child: Stack(
@@ -1673,11 +1633,8 @@ class __ChoiceCardState extends State<_ChoiceCard> with Slot {
         },
         child: AnimatedContainer(
           decoration: BoxDecoration(
-            borderRadius: AppDimensions.borderRadiusMedium,
-            color:
-                isSelected
-                    ? (widget.selectedColor ?? AppColors.primary)
-                    : Colors.white,
+            borderRadius: AppSpacing.borderRadiusMedium,
+            color: isSelected ? AppColors.primary : Colors.white,
             boxShadow:
                 isSelected
                     ? [

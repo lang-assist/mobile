@@ -19,7 +19,7 @@ class AudioState extends Signal<bool> {
 }
 
 class ConversationController {
-  MaterialController _material;
+  final MaterialController _material;
 
   MaterialController get material => _material;
 
@@ -175,7 +175,8 @@ class ConversationController {
 
   Signal<Object?> error = Signal<Object?>(null);
 
-  late bool _isCompleted = material.status == Enum$MaterialStatus.COMPLETED;
+  late bool _isCompleted =
+      material.conversationStatus == Enum$MaterialConvStatus.COMPLETED;
 
   bool get isCompleted => _isCompleted;
 

@@ -8,9 +8,6 @@ class SignUpMainScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const AuthScaffold(
-      title: "Welcome to",
-      children: [SocialMediaIcons()],
-    );
+    return AuthScaffold(title: "Welcome to", children: [SocialMediaIcons()]);
   }
 }

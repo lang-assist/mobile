@@ -60,19 +60,23 @@ class _TermsTextState extends State<TermsText>
 
   late final List<int> blanks = (() {
     final res = <int>[];
-    // TODO: implement
+    for (var i = 0; i < terms.units.length; i++) {
+      if (terms.units[i].blankId != null) {
+        res.add(i);
+      }
+    }
     return res;
   }());
 
   String? blankPlaceholder(int index) {
-    // final blank = terms.terms[index];
-    // final blankIndex = blanks.indexOf(index);
-    // if (blank.value.isNotEmpty) {
-    //   return blank.value;
-    // }
-    // if (blanks.length > 1) {
-    //   return "____ (Blank ${blankIndex + 1})";
-    // }
+    final blank = terms.units[index];
+    final blankIndex = blanks.indexOf(index);
+    if (blank.controller!.text.isNotEmpty) {
+      return blank.controller!.text;
+    }
+    if (blanks.length > 1) {
+      return "____ (Blank ${blankIndex + 1})";
+    }
     return "____";
   }
 
@@ -82,10 +86,10 @@ class _TermsTextState extends State<TermsText>
   }
 
   bool hasBlankFocus(int index) {
-    return false;
-    // return terms.terms[index].type == TermType.BLANK &&
-    //     terms.terms[index].focusNode != null &&
-    //     terms.terms[index].focusNode!.hasFocus;
+    final focus =
+        terms.units[index].focusNode != null &&
+        terms.units[index].focusNode!.hasFocus;
+    return focus;
   }
 
   bool hasNext(int index) {
@@ -300,7 +304,6 @@ class _TermsTextState extends State<TermsText>
       recognizer =
           TapGestureRecognizer()
             ..onTapDown = (_) {
-              print("tap down");
               setState(() => _highlightedTerm = term);
             }
             ..onTapUp = (details) {
@@ -313,15 +316,22 @@ class _TermsTextState extends State<TermsText>
             };
     }
 
+    Paint? background;
+
+    if (hasBlankFocus(index)) {
+      background = Paint()..color = widget.highlightColor.op(0.3);
+    } else if (term.blankId != null) {
+      if (term.controller!.text.isEmpty) {
+        background = Paint()..color = AppColors.error.op(0.3);
+      } else {
+        background = Paint()..color = AppColors.success.op(0.3);
+      }
+    }
+
     var style = (widget.style ?? DefaultTextStyle.of(context).style).copyWith(
       backgroundColor: isHighlighted ? widget.highlightColor.op(0.3) : null,
       decoration: isHighlighted ? TextDecoration.underline : null,
-      background:
-          hasBlankFocus(index)
-              ? (Paint()
-                ..color = widget.highlightColor.op(0.3)
-                ..style = PaintingStyle.fill)
-              : null,
+      background: background,
     );
 
     if (widget.divideWithColors) {
@@ -329,7 +339,15 @@ class _TermsTextState extends State<TermsText>
       style = style.copyWith(foreground: Paint()..color = bgColor);
     }
 
-    return TextSpan(text: term.text, style: style, recognizer: recognizer);
+    String text = term.text;
+
+    if (term.blankId != null) {
+      if (term.controller!.text.isEmpty) {
+        text = blankPlaceholder(index) ?? "";
+      }
+    }
+
+    return TextSpan(text: text, style: style, recognizer: recognizer);
   }
 
   void _listenFocus() {

@@ -59,11 +59,12 @@ class _InitialTestPageState extends State<InitialTestPage> {
 
   List<MaterialController> get materials =>
       journeyController.pathController.materials
-          .where((m) => m.status != Enum$MaterialStatus.COMPLETED)
+          .where((m) => m.completionStatus != Enum$MaterialCompStatus.COMPLETED)
           .toList();
 
   @override
   Widget build(BuildContext context) {
+    // print(materials);
     return UserScaffold(
       title: "Initial Test",
       body: Column(

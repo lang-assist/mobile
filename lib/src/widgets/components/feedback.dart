@@ -30,12 +30,12 @@ class _AIFeedbackWidgetState extends State<AIFeedbackWidget> {
       margin: const EdgeInsets.all(8),
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        borderRadius: AppDimensions.borderRadiusMedium,
+        borderRadius: AppSpacing.borderRadiusMedium,
         border: Border.all(color: color),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: AppDimensions.spacing2,
+        spacing: AppSpacing.md,
         children: [
           Row(
             children: [
@@ -56,7 +56,7 @@ class _AIFeedbackWidgetState extends State<AIFeedbackWidget> {
               width: double.infinity,
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                borderRadius: AppDimensions.borderRadiusMedium,
+                borderRadius: AppSpacing.borderRadiusMedium,
                 color: switch (item.type) {
                   Enum$AIFeedbackPartType.RIGHT => AppColors.accent,
                   Enum$AIFeedbackPartType.WRONG => AppColors.error,
@@ -79,7 +79,6 @@ class _AIFeedbackWidgetState extends State<AIFeedbackWidget> {
 
 class _Feedback extends StatefulWidget {
   const _Feedback({
-    super.key,
     required this.icon,
     required this.color,
     required this.text,

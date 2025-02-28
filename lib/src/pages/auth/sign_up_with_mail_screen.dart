@@ -293,7 +293,7 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
       focusNode: emailFocusNode,
       pageTitle: 'Welcome to',
       buttonTitle: 'Next',
-      buttonIcon: ImgGenIcons.name(ImgGenIconNames.email),
+      buttonIcon: AppIcons.name(ImgGenIconNames.email),
       page: AppTextFormField(
         focusNode: emailFocusNode,
         label: 'E-Mail',
@@ -317,7 +317,7 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
       focusNode: passwordFocusNode,
       pageTitle: 'Sign In to',
       buttonTitle: 'Sign In',
-      buttonIcon: ImgGenIcons.name(ImgGenIconNames.email),
+      buttonIcon: AppIcons.name(ImgGenIconNames.email),
       page: Builder(
         builder: (ctx) {
           final hasPwd = availableMethods!.contains(Enum$Providers.EMAIL);
@@ -390,7 +390,7 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
       focusNode: newPasswordFocusNode,
       pageTitle: 'Sign Up to',
       buttonTitle: 'Next',
-      buttonIcon: ImgGenIcons.name(ImgGenIconNames.next),
+      buttonIcon: AppIcons.name(ImgGenIconNames.next),
       page: AppTextFormField(
         focusNode: newPasswordFocusNode,
         label: 'New Password',
@@ -417,7 +417,7 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
       focusNode: userNameFocusNode,
       pageTitle: 'Sign Up to',
       buttonTitle: 'Sign Up',
-      buttonIcon: ImgGenIcons.name(ImgGenIconNames.next),
+      buttonIcon: AppIcons.name(ImgGenIconNames.next),
       page: AppTextFormField(
         focusNode: userNameFocusNode,
         label: 'Username',
@@ -442,7 +442,7 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
       focusNode: verificationFocusNode,
       pageTitle: 'Verify with',
       buttonTitle: 'Verify',
-      buttonIcon: ImgGenIcons.name(ImgGenIconNames.next),
+      buttonIcon: AppIcons.name(ImgGenIconNames.next),
       page: AppTextFormField(
         focusNode: verificationFocusNode,
         label: 'Verification Code',
@@ -466,7 +466,7 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
       focusNode: forgotPasswordFocusNode,
       pageTitle: 'Set New Password',
       buttonTitle: 'Set Password',
-      buttonIcon: ImgGenIcons.name(ImgGenIconNames.next),
+      buttonIcon: AppIcons.name(ImgGenIconNames.next),
       page: AppTextFormField(
         focusNode: forgotPasswordFocusNode,
         label: 'New Password',
