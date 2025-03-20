@@ -1,0 +1,4 @@
+projects:
+  main:
+    schema: "http://localhost:3000/graphql"
+    documents: "./**/*.gql"

@@ -1,7 +1,7 @@
 import 'package:api/api.dart';
-import 'package:assist_utils/assist_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:sign_flutter/sign_flutter.dart';
+import 'package:utils/utils.dart';
 
 class SelectAvatar extends StatefulWidget {
   const SelectAvatar({super.key, required this.avatar});
@@ -32,7 +32,7 @@ class _SelectAvatarState extends State<SelectAvatar> {
             AppButton(
               size: AppSizeVariant.medium,
               variant: AppButtonVariant.text,
-              onPressed: () {
+              onPressed: (_) {
                 widget.avatar.value = Avatar.fromString(randomColor());
               },
               title: Row(
@@ -43,7 +43,7 @@ class _SelectAvatarState extends State<SelectAvatar> {
             AppButton(
               size: AppSizeVariant.medium,
               variant: AppButtonVariant.text,
-              onPressed: () {},
+              onPressed: (_) {},
               title: Row(children: [Icon(Icons.upload), Text("Yükle")]),
             ),
           ],

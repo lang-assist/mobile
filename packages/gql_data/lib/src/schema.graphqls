@@ -1,0 +1,829 @@
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}
+"Date custom scalar type"
+scalar DateTime
+"JSON custom scalar type"
+scalar JSON
+"Any custom scalar type"
+scalar Any
+"Email custom scalar type"
+scalar Email
+"PhoneNumber custom scalar type"
+scalar PhoneNumber
+"Contact custom scalar type"
+scalar Contact
+"VerifyCode custom scalar type"
+scalar VerifyCode
+"Base64Data custom scalar type"
+scalar Base64Data
+"Avatar custom scalar type"
+scalar Avatar
+"Hsl custom scalar type"
+scalar Hsl
+"LinguisticUnit custom scalar type"
+scalar LinguisticUnit
+"LinguisticUnitSet custom scalar type"
+scalar LinguisticUnitSet
+type AdminQuery {
+  hello: String!
+}
+type AdminMutation {
+  hello: String!
+}
+type VerifyForgotPasswordResponse {
+  token: String!
+}
+type AuthInfo {
+  token: String
+  verified: Boolean!
+  v_session: ID
+}
+type AuthResponse {
+  user: User!
+  auth: AuthInfo!
+  admin: Admin
+}
+type MeResponse {
+  user: User!
+  admin: Admin
+}
+type AuthQuery {
+  me: MeResponse!
+  check_provider(contact: Contact!): ProviderResponse!
+}
+type ProviderResponse {
+  user: User
+  providers: [Providers!]!
+}
+type AuthMutation {
+  login_email(input: LoginEmailRequest!): AuthResponse!
+  login_phone(input: LoginPhoneRequest!): AuthResponse!
+  login_google(input: LoginGoogleRequest!): AuthResponse!
+  login_apple(input: LoginAppleRequest!): AuthResponse!
+  logout: Boolean!
+  reset_password(input: ResetPasswordRequest!): Boolean!
+  verify_forgot_password(input: VerifyForgotPasswordRequest!): VerifyForgotPasswordResponse!
+  change_password(input: ChangePasswordRequest!): AuthResponse!
+  resend_verify_email(input: ResendVerifyEmailRequest!): Boolean!
+  verify_email(input: VerifyEmailRequest!): AuthResponse!
+  register_email(input: RegisterEmailRequest!): AuthResponse!
+  register_phone(input: RegisterPhoneRequest!): AuthResponse!
+}
+type SupportedLocalization {
+  name: String!
+  version: Int!
+}
+type LocalizationDocument {
+  language: String!
+  version: Int!
+  translations: JSON!
+}
+type PublicQuery {
+  supported_localizations: [SupportedLocalization!]!
+  localization_document(language: String!): LocalizationDocument!
+}
+type PublicMutation {
+  add_feedback(input: FeedbackRequest!): Boolean!
+  set_device_id(input: SetDeviceIdInput!): String!
+  set_forwarded_from(id: ID!, input: SetForwardedFromInput!): Boolean!
+  set_fcm_token(id: ID!, input: SetFcmTokenInput!): Boolean!
+}
+type Query {
+  admin: AdminQuery!
+  auth: AuthQuery!
+  public: PublicQuery!
+  user: UserQuery!
+}
+type Mutation {
+  admin: AdminMutation!
+  auth: AuthMutation!
+  user: UserMutation!
+  public: PublicMutation!
+}
+type Subscription {
+  start_conversation(materialId: ID!): ConversationUpdate!
+}
+type PageInfo {
+  hasNextPage: Boolean!
+  nextCursor: String
+}
+type GroupKey {
+  value: Any!
+  count: Int!
+}
+type Group {
+  key: String!
+  values: [GroupKey!]!
+}
+type GroupInfo {
+  totalCount: Int!
+  groups: [Group!]!
+}
+type User implements Node {
+  id: ID!
+  name: String!
+  avatar: Avatar!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  "@resolver_required"
+  authMethods(pagination: PaginationInput): AuthMethodConnection!
+}
+type UserConnection implements Connection {
+  pageInfo: PageInfo!
+  items: [User!]!
+  groups: GroupInfo
+}
+type ProviderInfo {
+  id: ID!
+  name: String!
+  email: String!
+  avatar: String
+  token: String
+  refreshToken: String
+  expiresAt: DateTime
+}
+type AuthMethod implements Node {
+  id: ID!
+  provider: Providers!
+  "@resolver_required"
+  user: User!
+  user_ID: ID!
+  info: ProviderInfo!
+  verified: Boolean!
+}
+type AuthMethodConnection implements Connection {
+  pageInfo: PageInfo!
+  items: [AuthMethod!]!
+  groups: GroupInfo
+}
+type AdminRole implements Node {
+  id: ID!
+  name: String!
+  description: String!
+  permissions: [String!]!
+  admins(pagination: PaginationInput): AdminConnection!
+}
+"Platform admin"
+type Admin implements Node {
+  id: ID!
+  user: User
+  user_ID: ID!
+  email: String!
+  role: AdminRole!
+  role_ID: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+type AdminConnection implements Connection {
+  pageInfo: PageInfo!
+  items: [Admin!]!
+  groups: GroupInfo
+}
+type Feedback {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  status: FeedbackStatus!
+  type: FeedbackType!
+  category: FeedbackCategory!
+  comment: String
+  images: [String!]
+  "Şikayet eden kullanıcı"
+  issuer: User!
+  issuer_ID: ID!
+  "Şikayet edilen kullanıcı"
+  user: User
+  user_ID: ID
+}
+"Öğrenilecek diller"
+type SupportedLanguage implements Node {
+  id: ID!
+  tag: String!
+  name: String!
+  direction: String!
+  country: String
+  sentences_to_voice: [String!]!
+  sentences_to_translate: [String!]!
+}
+type SupportedLanguageConnection implements Connection {
+  pageInfo: PageInfo!
+  items: [SupportedLanguage!]!
+  groups: GroupInfo
+}
+"Cihaz dili / Original language"
+type SupportedLocale implements Node {
+  id: ID!
+  name: String!
+  tag: String!
+  direction: String!
+  country: String
+}
+type SupportedLocaleConnection implements Connection {
+  pageInfo: PageInfo!
+  items: [SupportedLocale!]!
+  groups: GroupInfo
+}
+"Dil öğrenme yolculuğu"
+type Journey implements Node {
+  id: ID!
+  to: String!
+  from: String!
+  name: String!
+  avatar: String!
+  "Son çalışma tarihi"
+  lastStudyDate: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  stages(pagination: PaginationInput): StageConnection!
+}
+type JourneyConnection implements Connection {
+  pageInfo: PageInfo!
+  items: [Journey!]!
+  groups: GroupInfo
+}
+type Levels {
+  listening: Int!
+  reading: Int!
+  speaking: Int!
+  writing: Int!
+  grammar: Int!
+  vocabulary: Int!
+}
+type Stage implements Node {
+  id: ID!
+  journey_ID: ID!
+  name: String
+  description: String
+  imageId: ID
+  status: StageStatus!
+  stagePart: StagePartConnection!
+  levelsOnStart: Levels
+  levelsOnFinish: Levels
+  notes: [String!]
+}
+type StageConnection implements Connection {
+  pageInfo: PageInfo!
+  items: [Stage!]!
+  groups: GroupInfo
+}
+type MaterialCreation {
+  type: MaterialType!
+  material: Material!
+}
+type StageDocumentationPart {
+  title: String!
+  ref_ID: ID!
+}
+type StageMaterialPart {
+  type: MaterialType!
+  material_ID: ID!
+}
+type StageWord {
+  word: String!
+  category: String
+  ref_ID: ID
+  practices: [ID!]
+  use_cases: [ID!]
+}
+type StageSentence {
+  sentence: String!
+  context: String!
+  ref_ID: ID
+  practices: [ID!]
+  use_cases: [ID!]
+}
+type StagePart implements Node {
+  id: ID!
+  type: StagePartType!
+  explanation: String!
+  material: StageMaterialPart
+  documentation: StageDocumentationPart
+  words: [StageWord!]
+  sentences: [StageSentence!]
+}
+type StagePartConnection implements Connection {
+  pageInfo: PageInfo!
+  items: [StagePart!]!
+  groups: GroupInfo
+}
+type Material implements Node {
+  id: ID!
+  journey: Journey!
+  journey_ID: ID!
+  user: User!
+  user_ID: ID!
+  stage: Stage!
+  stage_ID: ID!
+  part: StagePart!
+  part_ID: ID!
+  genStatus: MaterialGenStatus!
+  compStatus: MaterialCompStatus!
+  convStatus: MaterialConvStatus!
+  feedbackStatus: MaterialFeedbackStatus!
+  createdAt: DateTime!
+  completedAt: DateTime
+  details: MaterialDetails
+  type: MaterialType
+  answer: UserAnswer
+  aiFeedbacks(pagination: PaginationInput): AIFeedbackConnection!
+  unseenAiFeedbacks: Int!
+  turns(pagination: PaginationInput): ConversationTurnConnection!
+}
+type MaterialConnection implements Connection {
+  pageInfo: PageInfo!
+  items: [Material!]!
+  groups: GroupInfo
+}
+type UserAnswer implements Node {
+  id: ID!
+  user: User!
+  user_ID: ID!
+  material: Material!
+  material_ID: ID!
+  createdAt: DateTime!
+  answers: JSON!
+}
+type UserAnswerConnection implements Connection {
+  pageInfo: PageInfo!
+  items: [UserAnswer!]!
+  groups: GroupInfo
+}
+type StoryPart {
+  type: StoryPartType!
+  question: QuizQuestion
+  hasPicture: Boolean!
+  pictureId: ID
+  audioId: ID
+  ssml: String
+}
+type StoryDetails implements MaterialDetails {
+  type: MaterialType!
+  title: String!
+  description: String!
+  parts: [StoryPart!]!
+}
+type QuizDetails implements MaterialDetails {
+  type: MaterialType!
+  title: String!
+  description: String!
+  questions: [QuizQuestion!]!
+  preludes: [QuizPrelude!]
+}
+type QuizPreludeItem {
+  type: QuizPreludeItemType!
+  content: LinguisticUnitSet
+  hasPicture: Boolean!
+  pictureId: ID
+  audioId: ID
+}
+type QuizPrelude {
+  id: ID!
+  parts: [QuizPreludeItem!]!
+}
+type QuestionItem {
+  id: ID!
+  text: LinguisticUnitSet!
+  pictureId: ID
+  hasPicture: Boolean!
+  audioId: ID
+}
+type QuizQuestion {
+  id: String!
+  type: QuizQuestionType!
+  question: LinguisticUnitSet!
+  preludeID: String
+  choices: [QuestionItem!]
+  secondaryChoices: [QuestionItem!]
+}
+type ConversationCharacter {
+  name: String!
+  description: String
+  voice: String
+  avatar: Avatar
+  gender: String
+}
+type ConversationDetails implements MaterialDetails {
+  type: MaterialType!
+  title: String!
+  description: String!
+  instructions: LinguisticUnitSet!
+  characters: [ConversationCharacter!]!
+}
+type ConversationTurn implements Node {
+  id: ID!
+  material: Material!
+  material_ID: ID!
+  ssml: String
+  character: String!
+  text: LinguisticUnitSet
+  createdAt: DateTime!
+  audio_ID: ID
+  analyze: JSON
+  nextTurn: String
+}
+type ConversationTurnConnection implements Connection {
+  pageInfo: PageInfo!
+  items: [ConversationTurn!]!
+  groups: GroupInfo
+}
+type ConversationUpdate {
+  turn: ConversationTurn
+  nextTurn: String
+}
+type AIFeedbackPart {
+  type: AIFeedbackPartType!
+  text: String!
+}
+type AIFeedbackInterface {
+  type: AIFeedbackType!
+  question: String
+  turnIndex: Int
+  parts: [AIFeedbackPart!]!
+}
+type AIFeedback implements Node {
+  id: ID!
+  createdAt: DateTime!
+  material: Material
+  material_ID: ID
+  user: User
+  user_ID: ID!
+  feedback: AIFeedbackInterface!
+  seen: Boolean!
+}
+type AIFeedbackConnection implements Connection {
+  pageInfo: PageInfo!
+  items: [AIFeedback!]!
+  groups: GroupInfo
+}
+type UserDocExplanation {
+  type: UserDocExplanationType!
+  ui: UserDocExplanationUI
+  text: String
+  pictureId: ID
+  audioId: ID
+}
+type UserDoc implements Node {
+  id: ID!
+  template_ID: ID!
+  user_ID: ID!
+  journey_ID: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  template: UserDocTemplate!
+}
+type UserDocTemplate implements Node {
+  id: ID!
+  title: String!
+  description: String!
+  includes: [String!]!
+  explanations: [UserDocExplanation!]!
+}
+type UserDocConnection implements Connection {
+  pageInfo: PageInfo!
+  items: [UserDoc!]!
+  groups: GroupInfo
+}
+type ModelSet implements Node {
+  id: ID!
+  name: String!
+  description: String!
+  chatModel: String!
+  ttsModel: String!
+  sttModel: String!
+  imgModel: String!
+}
+type ModelSetConnection implements Connection {
+  pageInfo: PageInfo!
+  items: [ModelSet!]!
+  groups: GroupInfo
+}
+type UserQuery {
+  my_journeys: JourneyConnection!
+  journey(id: ID!): Journey
+  material(id: ID!): Material
+  conversation_turns(materialId: ID!): [ConversationTurn!]!
+  parsed_units(text: String!, journeyId: ID!): LinguisticUnitSet!
+  documentation(input: DocumentationInput!): UserDoc!
+  user_doc(id: ID!): UserDoc!
+  journey_docs(journeyId: ID!, pagination: PaginationInput): UserDocConnection!
+  material_feedbacks(materialId: ID!): [AIFeedback!]!
+  model_sets: ModelSetConnection!
+  stage(journeyId: ID!, stageId: ID!): Stage
+  supported_languages: SupportedLanguageConnection!
+  supported_locales: SupportedLocaleConnection!
+}
+type AnswerMaterialResponse {
+  newStage: Stage
+  currentStage: Stage
+}
+type UserMutation {
+  create_journey(input: CreateJourneyInput!): Journey!
+  delete_journey(id: ID!): Boolean!
+  update_journey(id: ID!, input: UpdateJourneyInput!): Journey!
+  answer_material(input: AnswerMaterialInput!): AnswerMaterialResponse!
+  add_user_input(input: AddUserInputInput!): ConversationTurn!
+  "Reset journey."
+  reset_journey(id: ID!): Boolean!
+  clear_conversation(materialId: ID!): Boolean!
+  prepare_material(materialId: ID!): Material!
+  regenerate_material(materialId: ID!): Material!
+  gen_material(input: GenMaterialInput!): Material!
+  set_next_part(stageId: ID!, part: Int!): Boolean!
+  practice_sentence(stageId: ID!, ref: ID!): Material!
+  practice_word(stageId: ID!, ref: ID!): Material!
+  enrich_documentation(stageId: ID!, ref: ID!): UserDoc!
+  enrich_dictionary(stageId: ID!, ref: ID!): UserDoc!
+  sentence_use_case(stageId: ID!, ref: ID!): UserDoc!
+  word_use_case(stageId: ID!, ref: ID!): UserDoc!
+  translate_sentence(stageId: ID!, ref: ID!): String!
+  translate_word(stageId: ID!, ref: ID!): String!
+}
+interface Node {
+  id: ID!
+}
+interface Connection {
+  pageInfo: PageInfo!
+  items: [Node!]!
+  groups: GroupInfo
+}
+interface MaterialDetails {
+  type: MaterialType!
+  title: String!
+  description: String!
+}
+enum Domains {
+  user
+  org
+  admin
+  public
+  auth
+}
+enum Providers {
+  EMAIL
+  PHONE
+  GOOGLE
+  APPLE
+}
+enum FeedbackType {
+  FEEDBACK
+  COMPLAINT
+}
+enum FeedbackStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+enum FeedbackCategory {
+  SERVICE
+  SERVICER
+  ORGANIZATION
+  USER
+  REVIEW
+  OTHER
+}
+enum StageStatus {
+  GENERATING
+  GENERATED
+  COMPLETED
+}
+enum StagePartType {
+  DOCUMENTATION
+  TASK
+  WORDS
+  SENTENCES
+}
+enum MaterialType {
+  STORY
+  QUIZ
+  CONVERSATION
+  UNKNOWN
+}
+enum MaterialGenStatus {
+  CREATING
+  PREPARING
+  COMPLETED
+  ERROR
+}
+enum MaterialCompStatus {
+  NOT_STARTED
+  COMPLETED
+  ANALYZING
+  ERROR
+}
+enum MaterialConvStatus {
+  NOT_STARTED
+  COMPLETED
+  PENDING
+}
+enum MaterialFeedbackStatus {
+  NOT_STARTED
+  GENERATING
+  COMPLETED
+  ERROR
+}
+enum StoryPartType {
+  NARRATIVE
+  PICTURE
+  AUDIO
+  QUESTION
+}
+enum QuizPreludeItemType {
+  TEXT
+  PICTURE
+  AUDIO
+}
+enum QuizQuestionType {
+  MULTIPLE_CHOICE
+  CHOICE
+  TRUE_FALSE
+  FILL_BLANK
+  MATCHING
+  ORDERING
+  TEXT_WRITE
+  RECORD
+}
+enum AIFeedbackType {
+  CORRECTION
+  RECOMMENDATION
+  EXPLANATION
+  PRACTICE_TIP
+  GENERAL_FEEDBACK
+  OTHER
+}
+enum AIFeedbackPartType {
+  WRONG
+  RIGHT
+  TIP
+  EXPLANATION
+  OTHER
+}
+enum UserDocExplanationType {
+  text
+  picture
+  audio
+}
+enum UserDocExplanationUI {
+  tip
+  example
+  explanation
+  note
+  warning
+  error
+  right
+}
+input LoginEmailRequest {
+  email: Email!
+  password: String!
+}
+input LoginPhoneRequest {
+  phone: PhoneNumber!
+  password: String!
+}
+input LoginGoogleRequest {
+  code: String!
+}
+input LoginAppleRequest {
+  code: String!
+}
+input ResetPasswordRequest {
+  email: Email!
+}
+input VerifyForgotPasswordRequest {
+  email: Email!
+  code: VerifyCode!
+}
+input ChangePasswordRequest {
+  token: String!
+  newPassword: String!
+}
+input VerifyEmailRequest {
+  v_session: ID!
+  code: VerifyCode!
+}
+input RegisterEmailRequest {
+  name: String!
+  email: Email!
+  password: String!
+}
+input RegisterPhoneRequest {
+  name: String!
+  phone: PhoneNumber!
+  password: String!
+}
+input ResendVerifyEmailRequest {
+  email: Email!
+}
+input FeedbackRequest {
+  type: FeedbackType!
+  comment: String
+  images: [String!]
+}
+input SetDeviceIdInput {
+  fcm_token: String
+  apns_token: String
+  locales: String
+  ip: String
+  country: String
+  os: String
+  app_version: String
+  forwarded_from: ID
+}
+input SetForwardedFromInput {
+  forwarded_from: ID!
+}
+input SetFcmTokenInput {
+  fcm_token: String!
+  apns_token: String
+}
+input UploadingHsl {
+  hsl: Hsl!
+}
+input UploadingFile {
+  mimeType: String!
+  encoding: String
+  filename: String
+  data: Base64Data!
+}
+input PaginationInput {
+  filter: JSON
+  sort: String
+  limit: Int = 50
+  cursor: String
+}
+input CreateJourneyInput {
+  to: String!
+  from: String!
+  name: String!
+  avatar: UploadingHsl!
+  modelSet: ID!
+  referenceText: String!
+  recording: ID
+  repating: String
+  description: String
+  introduction: String
+}
+input UpdateJourneyInput {
+  name: String
+  avatar: String
+}
+input DocumentationInput {
+  journeyId: ID!
+  title: String!
+  searchTerm: String!
+}
+input CreateMaterialInput {
+  journeyId: ID!
+}
+input AnswerMaterialInput {
+  materialId: ID!
+  stageId: ID!
+  partId: ID!
+  answer: JSON!
+}
+input StartConversationInput {
+  materialId: ID!
+}
+input AddUserInputInput {
+  materialId: ID!
+  text: String
+  audio_ID: ID
+}
+input GenMaterialInput {
+  journeyId: ID!
+  stageId: ID!
+  type: MaterialType!
+}
+"""
+@resolver(permissions: [String!]!)
+This directive marks the field as a resolver required.
+
+If permissions is empty, it means that the field is public.
+
+Given permissions will be checked with OR logic.
+"""
+directive @resolver(permissions: [String!]!) on FIELD_DEFINITION
+"""
+@reference(collection: String!)
+This directive marks the field as a document from the given collection.
+"""
+directive @reference(collection: String!) on FIELD_DEFINITION
+"""
+@foreign_connection(collection: String!, foreignField: String!)
+This directive marks the field as a paginated connection from the given collection.
+"""
+directive @foreign_connection(collection: String!, foreignField: String!) on FIELD_DEFINITION
+directive @grouped_foreign_connection(collection: String!, foreignField: String!, groupFields: [String!]!) on FIELD_DEFINITION
+directive @paginate(collection: String!) on FIELD_DEFINITION
+directive @group_by(collection: String!, groupFields: [String!]!) on FIELD_DEFINITION
+directive @from_collection(collection: String!) on FIELD_DEFINITION
+directive @domain(domain: Domains!) on FIELD_DEFINITION
+"Exposes a URL that specifies the behavior of this scalar."
+directive @specifiedBy(
+    "The URL that specifies the behavior of this scalar."
+    url: String!
+  ) on SCALAR
+"Indicates exactly one field must be supplied and this field must not be `null`."
+directive @oneOf on INPUT_OBJECT

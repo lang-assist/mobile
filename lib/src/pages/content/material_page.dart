@@ -4,7 +4,7 @@ import 'package:assist_app/src/routes.dart';
 import 'package:assist_app/src/scaffolds/index.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:user_data/user_data.dart';
+import 'package:gql_data/gql_data.dart';
 
 class MaterialPageView extends StatefulWidget {
   const MaterialPageView({super.key});
@@ -36,11 +36,16 @@ class _MaterialPageViewState extends State<MaterialPageView> {
       );
     }
     return UserScaffold(
-      title: _material!.metadata.title,
+      title: _material!.title,
       body: MaterialBuilder(
         material: _material!,
         onSubmit: (answer) async {
-          await Api.mutations.answerMaterial(_material!.id, answer);
+          await Api.mutations.answerMaterial(
+            _material!.id,
+            _material!.stageId,
+            _material!.partId,
+            answer,
+          );
           if (context.mounted) context.pop();
         },
         onValid: (bool valid) {

@@ -1,7 +1,7 @@
 import 'package:assist_app/src/scaffolds/app_scaffold.dart';
-import 'package:assist_utils/assist_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:sign_flutter/sign_flutter.dart';
+import 'package:utils/utils.dart';
 import './subscription.dart';
 import './subscription_service.dart';
 
@@ -72,7 +72,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> with Slot {
     }
   }
 
-  Future<void> _subscribe() async {
+  Future<void> _subscribe(_) async {
     if (_selectedPlanId.value == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Lütfen bir abonelik planı seçin')),
@@ -513,8 +513,8 @@ class _SubscriptionPageState extends State<SubscriptionPage> with Slot {
         isFullWidth: true,
         variant: AppButtonVariant.primary,
         size: AppSizeVariant.large,
-        onPressed: selectedPlanId != null ? _subscribe : () {},
-        isActive: selectedPlanId != null,
+        onPressed: selectedPlanId != null ? _subscribe : (_) {},
+        isActive: Signal(selectedPlanId != null),
         title: Text('Abone Ol'),
       ),
     );
@@ -553,7 +553,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> with Slot {
                 child: AppButton(
                   isFullWidth: true,
                   variant: AppButtonVariant.outlined,
-                  onPressed: _showCancelDialog,
+                  onPressed: (_) => _showCancelDialog(),
                   title: Text('İptal Et'),
                 ),
               ),
@@ -562,7 +562,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> with Slot {
                 child: AppButton(
                   isFullWidth: true,
                   variant: AppButtonVariant.primary,
-                  onPressed: _toggleAutoRenew,
+                  onPressed: (_) => _toggleAutoRenew(),
                   title: Text(
                     subscription.isAutoRenew
                         ? 'Otomatik Yenilemeyi Kapat'
@@ -589,14 +589,14 @@ class _SubscriptionPageState extends State<SubscriptionPage> with Slot {
             actions: [
               AppButton(
                 variant: AppButtonVariant.text,
-                onPressed: () {
+                onPressed: (_) {
                   Navigator.of(context).pop();
                 },
                 title: Text('Vazgeç'),
               ),
               AppButton(
                 variant: AppButtonVariant.danger,
-                onPressed: () async {
+                onPressed: (_) async {
                   Navigator.of(context).pop();
                   await _cancelSubscription();
                 },

@@ -1,13 +1,15 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:api/api.dart';
 import 'package:assist_app/src/controllers/journey.dart';
 import 'package:assist_app/src/routes.dart';
 import 'package:assist_app/src/scaffolds/app_scaffold.dart';
-import 'package:assist_utils/assist_utils.dart';
+import 'package:assist_app/src/widgets/components/record.dart';
 import 'package:flutter/material.dart';
+import 'package:gql_data/gql_data.dart';
 import 'package:sign_flutter/sign_flutter.dart';
-import 'package:user_data/user_data.dart';
+import 'package:utils/utils.dart';
 
 class CreateJourneyPage extends StatefulWidget {
   const CreateJourneyPage({super.key});
@@ -16,54 +18,75 @@ class CreateJourneyPage extends StatefulWidget {
   State<CreateJourneyPage> createState() => _CreateJourneyPageState();
 }
 
+enum _Pages {
+  mainLanguage,
+  targetLanguage,
+  aiModel,
+  //journeyName,
+  initTest,
+  introduction,
+}
+
 class _CreateJourneyPageState extends State<CreateJourneyPage>
     with ResponsivePageMixin {
-  final to = Signal<Enum$SupportedLanguage?>(Enum$SupportedLanguage.en_US);
+  final to = Signal<Fragment$DetailedSupportedLanguage?>(null);
+  final from = Signal<Fragment$SupportedLocale?>(null);
   final name = Signal<String>("test");
   final avatar = Signal<Avatar>(Avatar.fromString(randomColor()));
-  final model = Signal<String?>(null);
+  final model = Signal<Fragment$ModelSet?>(null);
   final valid = Signal<bool>(true);
 
+  var supportedLanguages = <Fragment$DetailedSupportedLanguage>[];
+  var supportedLocales = <Fragment$SupportedLocale>[];
+
   final pageController = PageController();
-  final currentPage = Signal<int>(0);
+  final currentPage = Signal<_Pages>(_Pages.mainLanguage);
 
   final form = GlobalKey<AppFormState>();
 
   void _validate() {
     switch (currentPage.value) {
-      case 0:
+      case _Pages.mainLanguage:
+        valid.value = from.value != null;
+        break;
+      case _Pages.targetLanguage:
         valid.value = to.value != null;
         break;
-      case 1:
-        valid.value = true;
+      case _Pages.aiModel:
+        valid.value = model.value != null;
         break;
-      case 2:
-        valid.value = name.value.isNotEmpty;
+      // case _Pages.journeyName:
+      //   valid.value = name.value.isNotEmpty;
+      //   break;
+      case _Pages.initTest:
+        valid.value =
+            referenceText.value != null &&
+            (recording.value != null || repating.value.isNotEmpty);
         break;
-      case 3:
-        valid.value = true;
+      case _Pages.introduction:
+        valid.value = introduction.value.isNotEmpty;
         break;
     }
   }
 
-  void _previousPage() {
-    if (currentPage.value > 0) {
+  void _previousPage(_) {
+    if (currentPage.value.index > 0) {
       pageController.previousPage(
         duration: Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
-      currentPage.value--;
+      currentPage.value = _Pages.values[currentPage.value.index - 1];
       _validate();
     }
   }
 
   FutureOr<void> _nextPage() {
-    if (currentPage.value < 2) {
+    if (currentPage.value.index < _Pages.values.length - 1) {
       pageController.nextPage(
         duration: Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
-      currentPage.value++;
+      currentPage.value = _Pages.values[currentPage.value.index + 1];
       _validate();
     } else {
       return Future(_createJourney);
@@ -73,17 +96,29 @@ class _CreateJourneyPageState extends State<CreateJourneyPage>
   Future<void> _createJourney() async {
     try {
       final journey = await journeyController.createJourney(
-        to: to.value!,
+        to: to.value!.tag,
+        from: from.value!.tag,
         name: name.value,
         avatar: avatar.value,
-        modelSetId: model.value!,
+        modelSetId: model.value!.id,
+        referenceText: referenceText.value!,
+        description: description.value.isNotEmpty ? description.value : null,
+        introduction: introduction.value.isNotEmpty ? introduction.value : null,
+        recording: recording.value,
+        repating: repating.value.isNotEmpty ? repating.value : null,
       );
 
       if (journey != null && context.mounted) {
-        if (mounted) context.journeyInitial();
+        if (mounted) context.journey();
       }
     } catch (_) {}
   }
+
+  var referenceText = Signal<String?>(null);
+  var description = Signal<String>("");
+  var introduction = Signal<String>("");
+  var recording = Signal<Uint8List?>(null);
+  var repating = Signal<String>("");
 
   late final MultiSignal multi;
 
@@ -93,7 +128,17 @@ class _CreateJourneyPageState extends State<CreateJourneyPage>
 
   @override
   void initState() {
-    multi = [to, name, model].multiSignal;
+    multi =
+        [
+          from,
+          to,
+          name,
+          model,
+          recording,
+          repating,
+          introduction,
+          canRead,
+        ].multiSignal;
     multi.addSlot(
       SlotWithHandler((a) {
         _validate();
@@ -104,8 +149,17 @@ class _CreateJourneyPageState extends State<CreateJourneyPage>
       modelSets = value;
       fetchingModelSets.value = false;
     });
+    _fetchSupportedLanguages();
     super.initState();
   }
+
+  Future<void> _fetchSupportedLanguages() async {
+    supportedLanguages = await Api.queries.supportedLanguages();
+    supportedLocales = await Api.queries.supportedLocales();
+    setState(() {});
+  }
+
+  Signal<bool> submitGroupActive = Signal(true);
 
   @override
   void dispose() {
@@ -124,15 +178,47 @@ class _CreateJourneyPageState extends State<CreateJourneyPage>
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         SizedBox(height: AppSpacing.lg),
-        ...Enum$SupportedLanguage.values.map(
+        ...supportedLanguages.map(
           (e) => Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: AppSelectCard<Enum$SupportedLanguage?>(
+            child: AppSelectCard<Fragment$DetailedSupportedLanguage?>(
               value: e,
               signal: to,
               title: e.name,
               onTap: () {
                 to.value = e;
+                name.value = e.name;
+                final arr = e.sentences_to_translate;
+                referenceText.value = arr[Random().nextInt(arr.length)];
+                _nextPage();
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMainLanguage() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          "Select Your Main Language",
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        SizedBox(height: AppSpacing.lg),
+        ...supportedLocales.map(
+          (e) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: AppSelectCard<Fragment$SupportedLocale?>(
+              value: e,
+              signal: from,
+              title: e.name,
+              onTap: () {
+                from.value = e;
+                _nextPage();
               },
             ),
           ),
@@ -159,12 +245,13 @@ class _CreateJourneyPageState extends State<CreateJourneyPage>
           ...modelSets.map(
             (e) => Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: AppSelectCard<String?>(
-                value: e.id,
+              child: AppSelectCard<Fragment$ModelSet?>(
+                value: e,
                 signal: model,
                 title: e.name,
                 onTap: () {
-                  model.value = e.id;
+                  model.value = e;
+                  _nextPage();
                 },
               ),
             ),
@@ -218,6 +305,94 @@ class _CreateJourneyPageState extends State<CreateJourneyPage>
     );
   }
 
+  Signal<bool> canRecord = Signal(true);
+  Signal<bool> canRead = Signal(true);
+
+  Widget _buildInitTest() {
+    return [referenceText, canRecord, canRead].multiSignal.builder((_) {
+      if (referenceText.value == null) {
+        return const SizedBox.shrink();
+      }
+      return Center(
+        child: SingleChildScrollView(
+          padding: responsive.pagePadding,
+          child: Column(
+            spacing: AppSpacing.sm,
+            children: [
+              Text(
+                "We have some starter questions for a more personalized learning journey. It will take just a moment!",
+                style: typo.bodyLarge.copyWith(fontWeight: FontWeight.normal),
+              ),
+
+              Text(
+                referenceText.value!,
+                style: typo.headlineMedium.copyWith(
+                  fontWeight: FontWeight.normal,
+                  color: AppColors.primary,
+                ),
+              ),
+
+              Text("Please repeat the sentence above with your voice."),
+              AppButton(
+                variant: AppButtonVariant.text,
+                onPressed: (_) {
+                  canRecord.value = false;
+                },
+                title: Text(
+                  "You can't record ?",
+                  textAlign: TextAlign.center,
+                  style: typo.bodyMedium.copyWith(color: AppColors.textHint),
+                ),
+              ),
+              RecordWidget(
+                size: AppSpacing.xxl,
+                onRecordComplete: (r) {
+                  recording.value = r;
+                },
+              ),
+
+              if (!canRecord.value) ...[
+                AppTextFormField(label: "Repeat", signal: repating),
+              ],
+              Text(
+                "You can't read ${to.value!.name} ?",
+                style: typo.hint.bodyMedium,
+              ),
+              AppButton(
+                isGroupActive: submitGroupActive,
+                onPressed: (pr) async {
+                  Future.delayed(Duration(seconds: 1)).then((_) {
+                    pr("Starting from scratch...");
+                  });
+                  Future.delayed(Duration(seconds: 2)).then((_) {
+                    pr("Almost done...");
+                  });
+                  await _createJourney();
+                  pr("Done");
+                  Future.delayed(Duration(seconds: 1)).then((_) {
+                    pr(null);
+                  });
+                },
+                title: Text("Start from stratch", textAlign: TextAlign.center),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _buildIntroduction() {
+    return AppTextFormField(
+      label: "Introduction",
+      signal: introduction,
+      maxLines: 5,
+      minLines: 2,
+      hint:
+          "Please introduce yourself, your name, age, etc. If you can, please write your goals and expectations for this journey.",
+    );
+  }
+
   @override
   Widget buildResponsive(BuildContext context, ResponsiveConfig config) {
     return UserScaffold(
@@ -228,13 +403,73 @@ class _CreateJourneyPageState extends State<CreateJourneyPage>
         child: Column(
           children: [
             Expanded(
-              child: PageView(
-                controller: pageController,
-                physics: NeverScrollableScrollPhysics(),
+              child: Column(
+                spacing: AppSpacing.md,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildTargetLanguage(),
-                  _buildAIModel(),
-                  _buildJourneyName(config),
+                  [from, to, model].multiSignal.builder((c) {
+                    final buf = <TextSpan>[];
+
+                    if (from.value != null) {
+                      buf.add(
+                        TextSpan(
+                          text: from.value!.name,
+                          style: typo.bodyMedium.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    }
+
+                    if (to.value != null) {
+                      buf.add(TextSpan(text: "  >>  "));
+                      buf.add(
+                        TextSpan(
+                          text: to.value!.name,
+                          style: typo.bodyMedium.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                      buf.add(TextSpan(text: ". "));
+                    }
+
+                    if (model.value != null) {
+                      buf.add(TextSpan(text: "Powered by "));
+                      buf.add(
+                        TextSpan(
+                          text: model.value!.name,
+                          style: typo.bodyMedium.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    }
+
+                    return Padding(
+                      padding: responsive.pagePadding,
+                      child: RichText(
+                        text: TextSpan(
+                          children: buf,
+                          style: typo.bodyMedium.copyWith(),
+                        ),
+                      ),
+                    );
+                  }),
+                  Expanded(
+                    child: PageView(
+                      controller: pageController,
+                      physics: NeverScrollableScrollPhysics(),
+                      children: [
+                        _buildMainLanguage(),
+                        _buildTargetLanguage(),
+                        _buildAIModel(),
+                        //_buildJourneyName(config),
+                        _buildInitTest(),
+                        _buildIntroduction(),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -246,9 +481,8 @@ class _CreateJourneyPageState extends State<CreateJourneyPage>
                   children: [
                     currentPage.builder(
                       (page) =>
-                          page > 0
+                          page.index > 0
                               ? AppButton(
-                                isActive: true,
                                 variant: AppButtonVariant.text,
                                 onPressed: _previousPage,
                                 title: Text("Back"),
@@ -256,15 +490,18 @@ class _CreateJourneyPageState extends State<CreateJourneyPage>
                               : SizedBox(),
                     ),
                     Spacer(),
-                    valid.builder((v) {
-                      return currentPage.builder(
-                        (page) => AppButton(
-                          isActive: v,
-                          onPressed: () async => await _nextPage(),
-                          title: Text(page == 2 ? "Create Journey" : "Next"),
-                        ),
-                      );
-                    }),
+                    AppButton(
+                      isActive: valid,
+                      isGroupActive: submitGroupActive,
+                      onPressed: (_) async => await _nextPage(),
+                      title: currentPage.builder((page) {
+                        return Text(
+                          page.index == _Pages.values.length - 1
+                              ? "Create Journey"
+                              : "Next",
+                        );
+                      }),
+                    ),
                   ],
                 ),
               ),

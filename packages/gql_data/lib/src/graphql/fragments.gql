@@ -1,0 +1,355 @@
+fragment PageInfo on PageInfo {
+  hasNextPage
+  nextCursor
+}
+
+fragment AuthInfo on AuthInfo {
+  verified
+  token
+  v_session
+}
+
+fragment PublicUser on User {
+  id
+  name
+  avatar
+}
+
+fragment MeAdmin on Admin {
+  id
+}
+
+fragment Journey on Journey {
+  id
+  name
+  avatar
+  from
+  to
+  lastStudyDate
+  createdAt
+  updatedAt
+}
+
+fragment Levels on Levels {
+  listening
+  reading
+  speaking
+  writing
+  grammar
+  vocabulary
+}
+fragment Stage on Stage {
+  id
+  name
+  description
+  imageId
+  status
+  levelsOnStart {
+    ...Levels
+  }
+  levelsOnFinish {
+    ...Levels
+  }
+  notes
+}
+
+fragment StagePartMaterial on StageMaterialPart {
+  type
+  material_ID
+}
+fragment StagePartDocumentation on StageDocumentationPart {
+  title
+  ref_ID
+}
+fragment StageSentence on StageSentence {
+  sentence
+  ref_ID
+  practices
+  use_cases
+}
+
+fragment StageWord on StageWord {
+  word
+  ref_ID
+  category
+  practices
+  use_cases
+}
+
+fragment StagePart on StagePart {
+  id
+  type
+  explanation
+  material {
+    ...StagePartMaterial
+  }
+  documentation {
+    ...StagePartDocumentation
+  }
+  sentences {
+    ...StageSentence
+  }
+  words {
+    ...StageWord
+  }
+}
+
+fragment DetailedStage on Stage {
+  ...Stage
+  stagePart {
+    items {
+      ...StagePart
+    }
+  }
+}
+
+fragment Material on Material {
+  id
+  stage_ID
+  part_ID
+  type
+  genStatus
+  compStatus
+  convStatus
+  feedbackStatus
+  createdAt
+  completedAt
+  unseenAiFeedbacks
+  details {
+    ...MiniDetails
+  }
+}
+fragment MiniDetails on MaterialDetails {
+  type
+  title
+  description
+}
+
+fragment MaterialStatusses on Material {
+  genStatus
+  compStatus
+  convStatus
+  feedbackStatus
+}
+
+fragment AIFeedbackPart on AIFeedbackPart {
+  type
+  text
+}
+
+fragment AIFeedbackInterface on AIFeedbackInterface {
+  type
+  question
+  turnIndex
+  parts {
+    ...AIFeedbackPart
+  }
+}
+
+fragment AIFeedback on AIFeedback {
+  id
+  createdAt
+  feedback {
+    ...AIFeedbackInterface
+  }
+  material_ID
+  user_ID
+  seen
+}
+
+fragment UserAnswer on UserAnswer {
+  id
+  createdAt
+  answers
+}
+
+fragment DetailedMaterial on Material {
+  ...Material
+  details {
+    ...MaterialDetails
+  }
+  answer {
+    ...UserAnswer
+  }
+  aiFeedbacks(pagination: { limit: 1000 }) {
+    items {
+      ...AIFeedback
+    }
+  }
+  turns(pagination: { limit: 1000 }) {
+    items {
+      ...ConversationTurn
+    }
+  }
+}
+
+fragment StoryPart on StoryPart {
+  type
+  ssml
+  hasPicture
+  question {
+    ...QuizQuestion
+  }
+
+  audioId
+  pictureId
+}
+
+fragment StoryDetails on StoryDetails {
+  parts {
+    ...StoryPart
+  }
+}
+
+fragment QuizPreludeItem on QuizPreludeItem {
+  type
+  content
+  hasPicture
+  pictureId
+  audioId
+}
+
+fragment QuizPrelude on QuizPrelude {
+  id
+  parts {
+    ...QuizPreludeItem
+  }
+}
+
+fragment QuestionItem on QuestionItem {
+  id
+  text
+  pictureId
+  hasPicture
+}
+
+fragment QuizQuestion on QuizQuestion {
+  id
+  type
+  question
+  preludeID
+  choices {
+    ...QuestionItem
+  }
+  secondaryChoices {
+    ...QuestionItem
+  }
+}
+
+fragment ConversationCharacter on ConversationCharacter {
+  name
+  description
+  voice
+  avatar
+  gender
+}
+
+fragment ConversationDetails on ConversationDetails {
+  instructions
+  characters {
+    ...ConversationCharacter
+  }
+}
+fragment QuizDetails on QuizDetails {
+  preludes {
+    ...QuizPrelude
+  }
+  questions {
+    ...QuizQuestion
+  }
+}
+
+fragment MaterialDetails on MaterialDetails {
+  type
+  title
+  description
+  ... on StoryDetails {
+    ...StoryDetails
+  }
+
+  ... on QuizDetails {
+    ...QuizDetails
+  }
+  ... on ConversationDetails {
+    ...ConversationDetails
+  }
+}
+
+fragment ConversationTurn on ConversationTurn {
+  id
+  createdAt
+  audio_ID
+  character
+  text
+  nextTurn
+}
+
+fragment ConversationUpdate on ConversationUpdate {
+  turn {
+    ...ConversationTurn
+  }
+  nextTurn
+}
+
+fragment AnswerMaterialResponse on AnswerMaterialResponse {
+  newStage {
+    ...DetailedStage
+  }
+}
+
+fragment UserDocExplanation on UserDocExplanation {
+  type
+  ui
+  text
+  pictureId
+  audioId
+}
+fragment UserDocTemplate on UserDocTemplate {
+  id
+  title
+  description
+  includes
+  explanations {
+    ...UserDocExplanation
+  }
+}
+
+fragment UserDoc on UserDoc {
+  id
+  createdAt
+  updatedAt
+  template_ID
+  user_ID
+  journey_ID
+  template {
+    ...UserDocTemplate
+  }
+}
+
+fragment ModelSet on ModelSet {
+  id
+  name
+  description
+}
+
+fragment SupportedLanguage on SupportedLanguage {
+  id
+  name
+  tag
+  direction
+  country
+}
+
+fragment DetailedSupportedLanguage on SupportedLanguage {
+  sentences_to_voice
+  sentences_to_translate
+  ...SupportedLanguage
+}
+
+fragment SupportedLocale on SupportedLocale {
+  id
+  name
+  tag
+  country
+  direction
+}

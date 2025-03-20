@@ -1,6 +1,5 @@
-import 'package:assist_app/src/controllers/journey.dart';
+import 'package:gql_data/gql_data.dart';
 import 'package:sign_flutter/sign_flutter.dart';
-import 'package:user_data/user_data.dart';
 
 class MaterialController extends VoidSignal {
   MaterialController({
@@ -65,10 +64,14 @@ class MaterialController extends VoidSignal {
 
   String get id => _material?.id ?? _detailed!.id;
 
-  Fragment$MaterialMetadata get metadata =>
-      isCreating
-          ? throw Exception("Creating material has no metadata")
-          : (_detailed?.metadata ?? _material!.metadata!);
+  String get stageId => _material?.stage_ID ?? _detailed!.stage_ID;
+
+  String get partId => _material?.part_ID ?? _detailed!.part_ID;
+
+  String get title => _material?.details?.title ?? _detailed!.details!.title;
+
+  String get description =>
+      _material?.details?.description ?? _detailed!.details!.description;
 
   Enum$MaterialType get type =>
       isCreating
@@ -85,7 +88,7 @@ class MaterialController extends VoidSignal {
 
   Future<void> answerMaterial(Map<String, dynamic> answer) async {
     if (!isDetailed) throw Exception("Material is not detailed");
-    await Api.mutations.answerMaterial(id, answer);
+    await Api.mutations.answerMaterial(id, stageId, partId, answer);
     emit();
   }
 
@@ -119,72 +122,67 @@ class MaterialController extends VoidSignal {
   }
 }
 
-class PathController extends VoidSignal {
-  PathController(this.path);
+// class PathController extends VoidSignal {
+//   PathController(this.path);
 
-  String get journeyId => journeyController.journey.id;
+//   String get journeyId => journeyController.journey.id;
 
-  bool get isInitial => path.type == Enum$PathType.INITIAL;
+//   final Fragment$DetailedPath path;
 
-  final Fragment$DetailedPath path;
+//   String get id => path.id;
 
-  String get id => path.id;
+//   final List<MaterialController> _materials = [];
 
-  final List<MaterialController> _materials = [];
+//   List<MaterialController> get materials => _materials;
 
-  List<MaterialController> get materials => _materials;
+//   late Input$PaginationInput pagination = _getPagination();
 
-  late Input$PaginationInput pagination = _getPagination();
+//   Fragment$PageInfo _pageInfo = Fragment$PageInfo(hasNextPage: true);
 
-  Fragment$PageInfo _pageInfo = Fragment$PageInfo(hasNextPage: true);
+//   Fragment$PageInfo get pageInfo => _pageInfo;
 
-  Fragment$PageInfo get pageInfo => _pageInfo;
+//   Signal<bool> get fetchingMaterials => Signal(false);
 
-  Signal<bool> get fetchingMaterials => Signal(false);
+//   Future<void> fetchMaterials() async {
+//     if (fetchingMaterials.value) return;
+//     fetchingMaterials.value = true;
+//     final res = await Api.queries.materials(journeyId, path.id, pagination);
+//     _materials.addAll(res.items.map((e) => MaterialController(material: e)));
+//     pagination = pagination.copyWith(cursor: res.pageInfo.nextCursor);
+//     _pageInfo = res.pageInfo;
+//     fetchingMaterials.value = false;
+//     emit();
+//   }
 
-  Future<void> fetchMaterials() async {
-    if (fetchingMaterials.value) return;
-    fetchingMaterials.value = true;
-    final res = await Api.queries.materials(journeyId, path.id, pagination);
-    _materials.addAll(res.items.map((e) => MaterialController(material: e)));
-    pagination = pagination.copyWith(cursor: res.pageInfo.nextCursor);
-    _pageInfo = res.pageInfo;
-    fetchingMaterials.value = false;
-    emit();
-  }
+//   setMaterials(List<Fragment$DetailedMaterial> materials) {
+//     _materials.clear();
+//     _materials.addAll(materials.map((e) => MaterialController(detailed: e)));
+//     emit();
+//   }
 
-  setMaterials(List<Fragment$DetailedMaterial> materials) {
-    _materials.clear();
-    _materials.addAll(materials.map((e) => MaterialController(detailed: e)));
-    emit();
-  }
+//   Future<void> fetchMoreMaterials() async {
+//     if (fetchingMaterials.value) return;
+//     fetchingMaterials.value = true;
+//     await fetchMaterials();
+//     fetchingMaterials.value = false;
+//   }
 
-  Future<void> fetchMoreMaterials() async {
-    if (fetchingMaterials.value) return;
-    fetchingMaterials.value = true;
-    await fetchMaterials();
-    fetchingMaterials.value = false;
-  }
+//   Input$PaginationInput _getPagination() {
+//     return Input$PaginationInput(limit: 10, sort: "createdAt:asc");
+//   }
 
-  Input$PaginationInput _getPagination() {
-    return Input$PaginationInput(
-      limit: 10,
-      sort: path.type == Enum$PathType.INITIAL ? "createdAt:asc" : null,
-    );
-  }
+//   Future<void> refreshMaterials() async {
+//     _materials.clear();
+//     pagination = _getPagination();
+//     await fetchMaterials();
+//   }
 
-  Future<void> refreshMaterials() async {
-    _materials.clear();
-    pagination = _getPagination();
-    await fetchMaterials();
-  }
-
-  MaterialController? getCreatingMaterial(String id) {
-    return _materials.firstWhere((e) {
-      if (e.isCreating) {
-        return e.id == id;
-      }
-      return false;
-    });
-  }
-}
+//   MaterialController? getCreatingMaterial(String id) {
+//     return _materials.firstWhere((e) {
+//       if (e.isCreating) {
+//         return e.id == id;
+//       }
+//       return false;
+//     });
+//   }
+// }

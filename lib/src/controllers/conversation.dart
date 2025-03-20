@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'dart:collection';
 import 'package:api/api.dart';
+import 'package:gql_data/gql_data.dart';
+
 import 'package:assist_app/src/controllers/path.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:http/http.dart';
 import 'package:sign_flutter/sign_flutter.dart';
-import 'package:user_data/user_data.dart';
 
 enum ConversationState { none, waiting, active, done, error }
 

@@ -1,6 +1,6 @@
-import 'package:assist_utils/assist_utils.dart';
 import 'package:flutter/material.dart';
-import 'package:user_data/user_data.dart';
+import 'package:gql_data/gql_data.dart';
+import 'package:utils/utils.dart';
 
 class AIFeedbackWidget extends StatefulWidget {
   const AIFeedbackWidget({super.key, required this.feedback});

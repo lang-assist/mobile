@@ -1,9 +1,9 @@
 import 'package:api/api.dart';
 import 'package:flutter/foundation.dart';
 import 'package:assist_app/src/utils/notification.dart';
+import 'package:gql_data/gql_data.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:user_data/user_data.dart';
 
 class DeviceController {
   DeviceController._();

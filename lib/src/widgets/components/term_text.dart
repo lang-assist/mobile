@@ -1,11 +1,11 @@
 import 'package:api/api.dart';
 import 'package:assist_app/src/controllers/journey.dart';
 import 'package:assist_app/src/pages/documentation.dart';
-import 'package:assist_utils/assist_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:gql_data/gql_data.dart';
 import 'package:sign_flutter/sign_flutter.dart';
-import 'package:user_data/user_data.dart';
+import 'package:utils/utils.dart';
 
 class TermsText extends StatefulWidget {
   const TermsText(
@@ -669,7 +669,11 @@ class _TermPropState extends State<TermProp> {
           context,
         ).textTheme.bodySmall!.copyWith(color: AppColors.primary),
         onTap: () {
-          DocumentationBottomSheet.show(context, docTitle, docSearchTerm);
+          DocumentationContent.showAsBottomSheet(
+            context,
+            docTitle,
+            docSearchTerm,
+          );
         },
       );
     }

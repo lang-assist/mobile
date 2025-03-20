@@ -7,14 +7,16 @@ import 'package:assist_app/src/controllers/path.dart';
 import 'package:assist_app/src/utils/auth.dart';
 import 'package:assist_app/src/widgets/audio_player.dart';
 import 'package:assist_app/src/widgets/components/record.dart';
-import 'package:assist_app/widgets.dart';
-import 'package:assist_utils/assist_utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:gql_data/gql_data.dart';
 import 'package:record/record.dart';
 import 'package:sign_flutter/sign_flutter.dart';
-import 'package:user_data/user_data.dart';
+import 'package:utils/utils.dart';
+
+import '../../widgets/common/measure.dart';
+import '../../widgets/components/term_text.dart';
 
 class ConversationBuilder extends StatefulWidget {
   const ConversationBuilder({
@@ -73,13 +75,13 @@ class _ConversationBuilderState extends State<ConversationBuilder> {
                     Wrap(
                       children: [
                         AppButton(
-                          onPressed: () {
+                          onPressed: (_) {
                             // Api.mutations.removeConversationAssistant();
                           },
                           title: const Text("Remove assistant"),
                         ),
                         AppButton(
-                          onPressed: () {
+                          onPressed: (_) {
                             // Api.mutations.clearConversation(widget.material.id);
                           },
                           title: const Text("Clear conversation"),
@@ -155,7 +157,7 @@ class _ConversationBuilderState extends State<ConversationBuilder> {
                               }),
                             ] else ...[
                               AppButton(
-                                onPressed: controller.listen,
+                                onPressed: (_) => controller.listen(),
                                 title: const Text("Start conversation"),
                               ),
                             ],
@@ -184,7 +186,7 @@ class _ConversationBuilderState extends State<ConversationBuilder> {
                       width: double.infinity,
                       padding: ResponsiveConfig.of(context).containerPadding,
                       child: AppButton(
-                        onPressed: widget.onSubmit,
+                        onPressed: (_) => widget.onSubmit(),
                         title: const Text("Submit"),
                       ),
                     ),
@@ -628,7 +630,7 @@ class _ConversationUserInputState extends State<ConversationUserInput> {
                             ? null
                             : AppButton(
                               variant: AppButtonVariant.text,
-                              onPressed: () {
+                              onPressed: (_) {
                                 text.value = "";
                               },
                               title: Icon(
@@ -648,7 +650,7 @@ class _ConversationUserInputState extends State<ConversationUserInput> {
               child: AppButton(
                 variant: AppButtonVariant.text,
                 size: AppSizeVariant.large,
-                onPressed: () {
+                onPressed: (_) {
                   if (text.value.isEmpty) {
                     return;
                   }

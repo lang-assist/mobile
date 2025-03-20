@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:api/api.dart';
 import 'package:assist_app/src/controllers/conversation.dart';
-import 'package:assist_utils/assist_utils.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:gql_data/gql_data.dart';
 import 'package:sign_flutter/sign_flutter.dart';
-import 'package:user_data/user_data.dart';
+import 'package:utils/utils.dart';
 
 class ConversationPlayerProvider extends InheritedWidget {
   const ConversationPlayerProvider({

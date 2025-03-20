@@ -1,0 +1,19 @@
+name: sign_flutter
+description: Sign basic state management for Flutter.
+version: 0.0.4
+homepage: https://github.com/Mehmetyaz/sign_flutter
+repository: https://github.com/Mehmetyaz/sign_flutter
+publish_to: none
+environment:
+  sdk: 3.8.0-133.0.dev
+
+dependencies:
+  sign:
+    path: ../sign
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.1

@@ -1,0 +1,164 @@
+query Me {
+  auth {
+    me {
+      user {
+        ...PublicUser
+      }
+      admin {
+        ...MeAdmin
+      }
+    }
+  }
+}
+
+query GetProvider($contact: Contact!) {
+  auth {
+    check_provider(contact: $contact) {
+      user {
+        ...PublicUser
+      }
+      providers
+    }
+  }
+}
+
+query GetMyJourneys {
+  user {
+    my_journeys {
+      items {
+        ...Journey
+      }
+    }
+  }
+}
+
+query GetJourney($id: ID!) {
+  user {
+    journey(id: $id) {
+      ...Journey
+    }
+  }
+}
+
+query GetStages($journeyId: ID!, $pagination: PaginationInput) {
+  user {
+    journey(id: $journeyId) {
+      stages(pagination: $pagination) {
+        items {
+          ...Stage
+        }
+        pageInfo {
+          ...PageInfo
+        }
+      }
+    }
+  }
+}
+
+query GetStageDetailed($journeyId: ID!, $stageId: ID!) {
+  user {
+    stage(journeyId: $journeyId, stageId: $stageId) {
+      ...DetailedStage
+    }
+  }
+}
+
+query GetMaterial($id: ID!) {
+  user {
+    material(id: $id) {
+      ...Material
+    }
+  }
+}
+
+query GetMaterialDetails($id: ID!) {
+  user {
+    material(id: $id) {
+      ...DetailedMaterial
+    }
+  }
+}
+
+subscription StartConversation($materialId: ID!) {
+  start_conversation(materialId: $materialId) {
+    ...ConversationUpdate
+  }
+}
+
+query GetConversationTurns($materialId: ID!) {
+  user {
+    conversation_turns(materialId: $materialId) {
+      ...ConversationTurn
+    }
+  }
+}
+
+query ParsedUnits($text: String!, $journeyId: ID!) {
+  user {
+    parsed_units(text: $text, journeyId: $journeyId)
+  }
+}
+
+query GetDocumentation($input: DocumentationInput!) {
+  user {
+    documentation(input: $input) {
+      ...UserDoc
+    }
+  }
+}
+
+query GetJourneyDocs($journeyId: ID!, $pagination: PaginationInput) {
+  user {
+    journey_docs(journeyId: $journeyId, pagination: $pagination) {
+      items {
+        ...UserDoc
+      }
+    }
+  }
+}
+
+query GetUserDoc($id: ID!) {
+  user {
+    user_doc(id: $id) {
+      ...UserDoc
+    }
+  }
+}
+
+query GetMaterialFeedbacks($materialId: ID!) {
+  user {
+    material_feedbacks(materialId: $materialId) {
+      ...AIFeedback
+    }
+  }
+}
+
+query GetModelSets {
+  user {
+    model_sets {
+      items {
+        ...ModelSet
+      }
+    }
+  }
+}
+
+query GetSupportedLanguages {
+  user {
+    supported_languages {
+      items {
+        ...DetailedSupportedLanguage
+      }
+    }
+  }
+}
+
+query GetSupportedLocales {
+  user {
+    supported_locales {
+      items {
+        ...SupportedLocale
+      }
+    }
+  }
+}

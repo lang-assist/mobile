@@ -1,11 +1,11 @@
 import 'package:assist_app/src/controllers/path.dart';
 import 'package:assist_app/src/pages/content/quiz_builder.dart';
 import 'package:assist_app/src/pages/content/story_page.dart';
-import 'package:assist_utils/assist_utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:gql_data/gql_data.dart';
 import 'package:sign_flutter/sign_flutter.dart';
-import 'package:user_data/user_data.dart';
+import 'package:utils/utils.dart';
 
 import 'conversation.dart';
 
@@ -132,20 +132,20 @@ class _MaterialBuilderState extends State<MaterialBuilder> with Slot {
                     items: [
                       if (widget.showDontUnderstand)
                         AppButton(
-                          onPressed: () {
+                          onPressed: (_) {
                             widget.onDontUnderstand?.call();
                           },
                           title: const Text("I don't understand"),
                         ),
                       if (kDebugMode && showDebugButtons) ...[
                         AppButton(
-                          onPressed: () async {
+                          onPressed: (_) async {
                             // await Api.mutations.prepareMaterial(widget.material.id);
                           },
                           title: const Text("Prepare Material"),
                         ),
                         AppButton(
-                          onPressed: () async {
+                          onPressed: (_) async {
                             // await Api.mutations.regenerateMaterial(
                             //   widget.material.id,
                             // );
@@ -153,7 +153,7 @@ class _MaterialBuilderState extends State<MaterialBuilder> with Slot {
                           title: const Text("Regenerate Material"),
                         ),
                         AppButton(
-                          onPressed: () async {
+                          onPressed: (_) async {
                             // await Api.mutations.resetJourney(
                             //   journeyController.journey.id,
                             // );
@@ -161,19 +161,19 @@ class _MaterialBuilderState extends State<MaterialBuilder> with Slot {
                           title: const Text("Reset Journey"),
                         ),
                         AppButton(
-                          onPressed: () async {
+                          onPressed: (_) async {
                             // await Api.mutations.deleteTemp(1);
                           },
                           title: const Text("Delete Temp 1"),
                         ),
                         AppButton(
-                          onPressed: () async {
+                          onPressed: (_) async {
                             // await Api.mutations.deleteTemp(2);
                           },
                           title: const Text("Delete Temp 2"),
                         ),
                         AppButton(
-                          onPressed: () async {
+                          onPressed: (_) async {
                             // await Api.mutations.deleteTemp(3);
                           },
                           title: const Text("Delete Temp 3"),

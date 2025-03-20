@@ -1,0 +1,211 @@
+mutation SetDevice($input: SetDeviceIdInput!) {
+  public {
+    set_device_id(input: $input)
+  }
+}
+
+mutation SetDeviceToken($id: ID!, $input: SetFcmTokenInput!) {
+  public {
+    set_fcm_token(id: $id, input: $input)
+  }
+}
+
+mutation SetForwardedFrom($id: ID!, $input: SetForwardedFromInput!) {
+  public {
+    set_forwarded_from(id: $id, input: $input)
+  }
+}
+
+mutation login_email($input: LoginEmailRequest!) {
+  auth {
+    login_email(input: $input) {
+      user {
+        ...PublicUser
+      }
+      auth {
+        ...AuthInfo
+      }
+      admin {
+        ...MeAdmin
+      }
+    }
+  }
+}
+
+mutation register_email($input: RegisterEmailRequest!) {
+  auth {
+    register_email(input: $input) {
+      user {
+        ...PublicUser
+      }
+      auth {
+        ...AuthInfo
+      }
+    }
+  }
+}
+
+mutation VerifyEmail($input: VerifyEmailRequest!) {
+  auth {
+    verify_email(input: $input) {
+      user {
+        ...PublicUser
+      }
+      auth {
+        ...AuthInfo
+      }
+    }
+  }
+}
+
+mutation CreateJourney($input: CreateJourneyInput!) {
+  user {
+    create_journey(input: $input) {
+      ...Journey
+    }
+  }
+}
+
+mutation DeleteJourney($id: ID!) {
+  user {
+    delete_journey(id: $id)
+  }
+}
+
+mutation UpdateJourney($id: ID!, $input: UpdateJourneyInput!) {
+  user {
+    update_journey(id: $id, input: $input) {
+      ...Journey
+    }
+  }
+}
+
+mutation AnswerMaterial($input: AnswerMaterialInput!) {
+  user {
+    answer_material(input: $input) {
+      ...AnswerMaterialResponse
+    }
+  }
+}
+
+mutation AddUserInput($input: AddUserInputInput!) {
+  user {
+    add_user_input(input: $input) {
+      ...ConversationTurn
+    }
+  }
+}
+
+mutation SetNextPart($stageId: ID!, $part: Int!) {
+  user {
+    set_next_part(stageId: $stageId, part: $part)
+  }
+}
+
+mutation PracticeSentence($stageId: ID!, $ref: ID!) {
+  user {
+    practice_sentence(stageId: $stageId, ref: $ref) {
+      ...Material
+    }
+  }
+}
+
+mutation PracticeWord($stageId: ID!, $ref: ID!) {
+  user {
+    practice_word(stageId: $stageId, ref: $ref) {
+      ...Material
+    }
+  }
+}
+
+mutation EnrichDocumentation($stageId: ID!, $ref: ID!) {
+  user {
+    enrich_documentation(stageId: $stageId, ref: $ref) {
+      ...UserDoc
+    }
+  }
+}
+
+mutation EnrichDictionary($stageId: ID!, $ref: ID!) {
+  user {
+    enrich_dictionary(stageId: $stageId, ref: $ref) {
+      ...UserDoc
+    }
+  }
+}
+
+mutation SentenceUseCase($stageId: ID!, $ref: ID!) {
+  user {
+    sentence_use_case(stageId: $stageId, ref: $ref) {
+      ...UserDoc
+    }
+  }
+}
+
+mutation WordUseCase($stageId: ID!, $ref: ID!) {
+  user {
+    word_use_case(stageId: $stageId, ref: $ref) {
+      ...UserDoc
+    }
+  }
+}
+
+mutation TranslateSentence($stageId: ID!, $ref: ID!) {
+  user {
+    translate_sentence(stageId: $stageId, ref: $ref)
+  }
+}
+
+mutation TranslateWord($stageId: ID!, $ref: ID!) {
+  user {
+    translate_word(stageId: $stageId, ref: $ref)
+  }
+}
+
+# mutation ClearConversation($materialId: ID!) {
+#   user {
+#     clear_conversation(materialId: $materialId)
+#   }
+# }
+
+# mutation RemoveConversationAssistant {
+#   user {
+#     remove_conversation_assistant
+#   }
+# }
+
+# mutation DeleteTemp($num: Int!) {
+#   user {
+#     delete_temp(num: $num)
+#   }
+# }
+
+# mutation ResetJourney($id: ID!) {
+#   user {
+#     reset_journey(id: $id)
+#   }
+# }
+
+# mutation PrepareMaterial($materialId: ID!) {
+#   user {
+#     prepare_material(materialId: $materialId) {
+#       ...DetailedMaterial
+#     }
+#   }
+# }
+
+# mutation RegenerateMaterial($materialId: ID!) {
+#   user {
+#     regenerate_material(materialId: $materialId) {
+#       ...DetailedMaterial
+#     }
+#   }
+# }
+
+# mutation GenMaterial($input: GenMaterialInput!) {
+#   user {
+#     gen_material(input: $input) {
+#       ...DetailedMaterial
+#     }
+#   }
+# }

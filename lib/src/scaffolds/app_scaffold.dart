@@ -1,8 +1,9 @@
 import 'package:assist_app/src/controllers/journey.dart';
-import 'package:assist_utils/assist_utils.dart';
+import 'package:assist_app/src/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:user_data/user_data.dart';
+import 'package:gql_data/gql_data.dart';
+import 'package:utils/utils.dart';
 import '../utils/auth.dart';
 
 class UserScaffold extends StatefulWidget {
@@ -116,13 +117,15 @@ class _UserScaffoldState extends State<UserScaffold>
 
   late final canPop = context.canPop();
 
+  final popupState = GlobalKey<PopupIconButtonState>();
+
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
       title: widget.title,
       body: widget.body,
-      showDrawer: true,
-      menuItems: menuItems,
+      showDrawer: false,
+      // menuItems: menuItems,
       onBackPressed:
           widget.showBackButton && canPop
               ? () {
@@ -133,6 +136,7 @@ class _UserScaffoldState extends State<UserScaffold>
         ...?widget.actions,
         if (AuthController().isAuthenticated)
           PopupIconButton(
+            key: popupState,
             icon: ImggenUserAvatar(avatar: user.avatar, size: 24),
             menuDecoration: BoxDecoration(
               color: Colors.white,
@@ -142,19 +146,36 @@ class _UserScaffoldState extends State<UserScaffold>
               AppButton(
                 variant: AppButtonVariant.primary,
                 prefixIcon: Icon(Icons.book_outlined),
-                onPressed: () {},
-                title: Text("Documentation"),
+                onPressed: (_) async {
+                  await popupState.currentState?.hideOverlay();
+                  journeyController.clearJourney();
+                  if (context.mounted) {
+                    context.journeys();
+                  }
+                },
+                title: Text("Journeys"),
               ),
               AppButton(
                 variant: AppButtonVariant.primary,
                 prefixIcon: Icon(Icons.book_outlined),
-                onPressed: () {},
+                onPressed: (_) async {
+                  await popupState.currentState?.hideOverlay();
+                  if (context.mounted) {
+                    context.journeyDocs();
+                  }
+                },
+                title: Text("Journey Docs"),
+              ),
+              AppButton(
+                variant: AppButtonVariant.primary,
+                prefixIcon: Icon(Icons.book_outlined),
+                onPressed: (_) {},
                 title: Text("Dictionary"),
               ),
               AppButton(
                 variant: AppButtonVariant.outlined,
                 prefixIcon: Icon(Icons.settings_outlined),
-                onPressed: () async {
+                onPressed: (_) async {
                   await context.push('/subscription');
                 },
                 title: Text("Settings"),
@@ -162,7 +183,7 @@ class _UserScaffoldState extends State<UserScaffold>
               AppButton(
                 variant: AppButtonVariant.danger,
                 prefixIcon: Icon(Icons.exit_to_app_outlined),
-                onPressed: () {
+                onPressed: (_) {
                   AuthController().logout();
                 },
                 title: Text("Çıkış Yap"),

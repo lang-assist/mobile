@@ -19,7 +19,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.8.0-149.0.dev
+  sdk: 3.8.0-133.0.dev
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -33,22 +33,29 @@ dependencies:
   flutter_web_plugins:
     sdk: flutter
   sign_flutter:
-    path: ../../lib/sign_flutter
+    path: packages/sign_flutter
   go_router: ^14.8.1
   record: ^5.2.1
   path_provider: ^2.1.5
-  api:
-    path: ../../lib/flutter-api
-  user_data:
-    path: ../../lib/user-data
-  assist_utils:
-    path: ../../lib/flutter-utils
   shared_preferences: ^2.5.2
   image_picker: ^1.1.2
   package_info_plus: ^8.3.0
   http: ">0.13.0 <2.0.0"
   audioplayers: ^6.2.0
   flutter_widget_from_html_core: ^0.16.0
+  icons_flutter: ^0.0.5
+  auto_size_text: ^3.0.0
+
+  logger: ^2.5.0
+  google_fonts: ^6.2.1
+  cached_network_image: ^3.4.1
+  flutter_svg: ^2.0.17
+  gql_data:
+    path: packages/gql_data
+  api:
+    path: packages/api
+  utils:
+    path: packages/utils
 
 dev_dependencies:
   flutter_test:

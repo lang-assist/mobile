@@ -1,0 +1,4 @@
+name: tools
+
+dependencies:
+  path: ^1.8.0

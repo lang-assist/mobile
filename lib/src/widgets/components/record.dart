@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:assist_app/src/utils/audio_fetch/audio_fetch.dart';
-import 'package:assist_utils/assist_utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
+import 'package:utils/utils.dart';
 
 class RecordWidget extends StatefulWidget {
   const RecordWidget({
@@ -177,7 +177,7 @@ class _RecordWidgetState extends State<RecordWidget>
   Widget build(BuildContext context) {
     return Center(
       child: AppButton(
-        onPressed: () {},
+        onPressed: (_) {},
         customBackgroundDecoration:
             widget.filled
                 ? BoxDecoration(

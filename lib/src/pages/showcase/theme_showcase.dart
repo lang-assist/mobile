@@ -1,6 +1,6 @@
-import 'package:assist_utils/assist_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:sign_flutter/sign_flutter.dart';
+import 'package:utils/utils.dart';
 
 class ThemeShowcase extends StatefulWidget {
   const ThemeShowcase({super.key});
@@ -51,7 +51,7 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
     );
   }
 
-  Future<void> _load() async {
+  Future<void> _load(_) async {
     await Future.delayed(const Duration(seconds: 2));
   }
 
@@ -63,7 +63,7 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
         actions: [
           AppButton(
             title: const Text('Tema Değiştir'),
-            onPressed: () {
+            onPressed: (_) {
               ThemeProvider.instance
                   .setBrightness(
                     ThemeProvider.instance.isDark
@@ -166,12 +166,12 @@ class _ThemeShowcaseState extends State<ThemeShowcase> {
                     AppButton(
                       title: const Text('Loading Button'),
                       onPressed: _load,
-                      isLoading: true,
+                      isLoading: Signal(true),
                     ),
                     AppButton(
                       title: const Text('Disabled Button'),
                       onPressed: _load,
-                      isActive: false,
+                      isActive: Signal(false),
                     ),
                     AppButton(
                       title: const Icon(Icons.add),

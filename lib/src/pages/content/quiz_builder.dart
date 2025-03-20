@@ -7,12 +7,13 @@ import 'package:assist_app/src/widgets/components/feedback.dart';
 import 'package:assist_app/src/widgets/components/item_picture.dart';
 import 'package:assist_app/src/widgets/components/record.dart';
 import 'package:assist_app/src/widgets/components/term_text.dart';
-import 'package:assist_utils/assist_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:go_router/go_router.dart';
+import 'package:gql_data/gql_data.dart';
 import 'package:record/record.dart';
 import 'package:sign_flutter/sign_flutter.dart';
-import 'package:user_data/user_data.dart';
+import 'package:utils/utils.dart';
 
 import '../../controllers/quiz.dart';
 
@@ -268,9 +269,18 @@ class _QuizBuilderState extends State<QuizBuilder> with WidgetsBindingObserver {
               right: pagePadding.right,
               child: AppButton(
                 isActive: controller.valid,
-                onPressed: () async {
-                  if (quizController.currentQuestionIndex ==
-                      quizController.questions.length - 1) {
+                onPressed: (_) async {
+                  final isLast =
+                      quizController.currentQuestionIndex ==
+                      quizController.questions.length - 1;
+
+                  if (isLast &&
+                      widget.material.completionStatus ==
+                          Enum$MaterialCompStatus.COMPLETED) {
+                    context.pop();
+                    return;
+                  }
+                  if (isLast) {
                     if (quizController.allIsValid) {
                       widget.onSubmit(quizController.buildAnswer());
                     } else {
@@ -314,10 +324,9 @@ class _QuestionBuilderState extends State<QuestionBuilder> {
         Enum$QuizQuestionType.TRUE_FALSE: _TrueFalseQuestion.new,
         Enum$QuizQuestionType.MATCHING: _MatchingQuestion.new,
         Enum$QuizQuestionType.MULTIPLE_CHOICE: _MultiChoiceQuestion.new,
-        Enum$QuizQuestionType.FILL_WRITE: _FillWriteQuestion.new,
-        Enum$QuizQuestionType.FILL_CHOICE: _FillWriteQuestion.new,
+        Enum$QuizQuestionType.FILL_BLANK: _FillWriteQuestion.new,
         Enum$QuizQuestionType.ORDERING: _OrderingQuestion.new,
-        Enum$QuizQuestionType.TEXT_INPUT_WRITE: _TextInputWrite.new,
+        Enum$QuizQuestionType.TEXT_WRITE: _TextInputWrite.new,
         Enum$QuizQuestionType.RECORD: _RecordQuestion.new,
         Enum$QuizQuestionType.CHOICE: _ChoiceQuestion.new,
       };
@@ -337,7 +346,13 @@ class _QuestionBuilderState extends State<QuestionBuilder> {
       }
     });
 
-    return constructor(controller: widget.controller, padding: widget.padding);
+    return Column(
+      children: [
+        constructor(controller: widget.controller, padding: widget.padding),
+        for (var feedback in widget.controller.aiFeedbacks)
+          AIFeedbackWidget(feedback: feedback),
+      ],
+    );
   }
 }
 
@@ -375,10 +390,10 @@ class __TrueFalseQuestionState
   setAnswer() {
     if (selectedChoices.value.isEmpty) {
       widget.controller.answer = null;
-      widget.controller.valid = false;
+      widget.controller.valid.value = false;
     } else {
       widget.controller.answer = selectedChoices.value.first == "true";
-      widget.controller.valid = true;
+      widget.controller.valid.value = true;
     }
   }
 
@@ -464,8 +479,8 @@ List<Matched> _parseMatchingAnswer(
   return answer.map<Matched>((e) {
     final leftName = e[0];
     final rightName = e[1];
-    final leftIndex = question.items!.indexWhere((e) => e.id == leftName);
-    final rightIndex = question.secondItems!.indexWhere(
+    final leftIndex = question.choices!.indexWhere((e) => e.id == leftName);
+    final rightIndex = question.secondaryChoices!.indexWhere(
       (e) => e.id == rightName,
     );
     final color = _colors.keys.toList()[(selectedIndex++) % _colors.length];
@@ -503,7 +518,7 @@ class _MatchingQuestion extends AppFormField<List<Matched>?> {
             return "Please select an answer";
           }
 
-          if (value.length != controller.question.items!.length) {
+          if (value.length != controller.question.choices!.length) {
             return "Please match all items";
           }
 
@@ -591,7 +606,7 @@ class __MatchingQuestionState
         }
 
         widget.controller.answer = answer;
-        widget.controller.valid = matches.value.length == items.length;
+        widget.controller.valid.value = matches.value.length == items.length;
       }
     }
   }
@@ -665,9 +680,9 @@ class __MatchingQuestionState
 
   Fragment$QuizQuestion get question => widget.controller.question;
 
-  late List<Fragment$QuestionItem> items = question.items!..shuffle();
+  late List<Fragment$QuestionItem> items = question.choices!..shuffle();
   late List<Fragment$QuestionItem> secondItems =
-      question.secondItems!..shuffle();
+      question.secondaryChoices!..shuffle();
 
   @override
   Widget build(BuildContext context) {
@@ -893,7 +908,11 @@ class _ChoiceQuestion extends AppFormField<int?> {
 }
 
 class __ChoiceQuestionState extends AppFormFieldState<int?, _ChoiceQuestion> {
-  final selectedChoices = SignalList<String>([]);
+  late final selectedChoices = SignalList<String>(
+    widget.controller.existingAnswer == null
+        ? []
+        : [widget.controller.existingAnswer!],
+  );
 
   @override
   String get name => widget.key.toString();
@@ -927,7 +946,7 @@ class __ChoiceQuestionState extends AppFormFieldState<int?, _ChoiceQuestion> {
       return;
     }
     widget.controller.answer = selectedChoices.value.firstOrNull;
-    widget.controller.valid = selectedChoices.value.isNotEmpty;
+    widget.controller.valid.value = selectedChoices.value.isNotEmpty;
   }
 
   @override
@@ -1028,7 +1047,8 @@ class __MultiChoiceQuestionState
                   item: choices[i],
                   onTap: () {
                     widget.controller.answer = selectedChoices.value;
-                    widget.controller.valid = selectedChoices.value.isNotEmpty;
+                    widget.controller.valid.value =
+                        selectedChoices.value.isNotEmpty;
                   },
                   selectedChoices: selectedChoices,
                 ),
@@ -1173,7 +1193,7 @@ class __FillWriteQuestionState
   void _setAnswer(String blankId, String value) {
     _answer.value[blankId] = value;
     widget.controller.answer = _answer.value;
-    widget.controller.valid = _blanks.every(
+    widget.controller.valid.value = _blanks.every(
       (e) =>
           _answer.value[e.blankId!] != null &&
           _answer.value[e.blankId!]!.isNotEmpty,
@@ -1224,10 +1244,10 @@ class __FillWriteQuestionState
                               widget.controller.answer = {
                                 _blanks.first.blankId!: selectedChoices.first,
                               };
-                              widget.controller.valid = true;
+                              widget.controller.valid.value = true;
                             } else {
                               widget.controller.answer = null;
-                              widget.controller.valid = false;
+                              widget.controller.valid.value = false;
                             }
                           },
                           key: Key("choice_${question.choices![i].id}"),
@@ -1273,23 +1293,32 @@ class __OrderingQuestionState
 
   Fragment$QuizQuestion get question => widget.controller.question;
 
-  final selectedChoices = SignalList<Fragment$QuestionItem>([]);
+  late final selectedChoices = SignalList<Fragment$QuestionItem>(
+    (widget.controller.existingAnswer as List? ?? [])
+        .cast<String>()
+        .map((e) => question.choices!.firstWhere((item) => item.id == e))
+        .toList(),
+  );
   late final unselectedChoices = SignalList<Fragment$QuestionItem>(
-    question.choices!.toList(),
+    widget.controller.existingAnswer == null
+        ? question.choices!.toList()
+        : question.choices!
+            .where((item) => !selectedChoices.value.contains(item))
+            .toList(),
   );
 
   void select(Fragment$QuestionItem item) {
     selectedChoices.add(item);
     unselectedChoices.remove(item);
     widget.controller.answer = selectedChoices.value.map((e) => e.id).toList();
-    widget.controller.valid = selectedChoices.value.isNotEmpty;
+    widget.controller.valid.value = selectedChoices.value.isNotEmpty;
   }
 
   void unselect(Fragment$QuestionItem item) {
     selectedChoices.remove(item);
     unselectedChoices.add(item);
     widget.controller.answer = selectedChoices.value.map((e) => e.id).toList();
-    widget.controller.valid = selectedChoices.value.isNotEmpty;
+    widget.controller.valid.value = selectedChoices.value.isNotEmpty;
   }
 
   @override
@@ -1360,7 +1389,9 @@ class _TextInputWrite extends StatefulWidget {
 }
 
 class __TextInputWriteState extends State<_TextInputWrite> {
-  late final controller = TextEditingController(text: widget.controller.answer);
+  late final controller = TextEditingController(
+    text: widget.controller.existingAnswer,
+  );
 
   Fragment$QuizQuestion get question => widget.controller.question;
 
@@ -1390,7 +1421,7 @@ class __TextInputWriteState extends State<_TextInputWrite> {
               maxLines: 10,
               onChanged: (value) {
                 widget.controller.answer = value;
-                widget.controller.valid = value.isNotEmpty;
+                widget.controller.valid.value = value.isNotEmpty;
               },
             ),
           ],
@@ -1451,7 +1482,7 @@ class __RecordQuestionState
               filled: true,
               onRecordComplete: (value) {
                 widget.controller.answer = value;
-                widget.controller.valid = value != null;
+                widget.controller.valid.value = value != null;
               },
               onAmplitudeChanged: (amplitude) {
                 amplitudes.add(amplitude);
@@ -1462,13 +1493,13 @@ class __RecordQuestionState
               onRecordStart: () {
                 recording.value = true;
                 widget.controller.answer = null;
-                widget.controller.valid = false;
+                widget.controller.valid.value = false;
                 widget.controller.addBehavior("record_started");
               },
               onRecordCancel: () {
                 recording.value = false;
                 widget.controller.answer = null;
-                widget.controller.valid = false;
+                widget.controller.valid.value = false;
                 widget.controller.addBehavior("record_canceled");
               },
             ),

@@ -1,0 +1,58 @@
+# build.yaml
+
+targets:
+  $default:
+    builders:
+      graphql_codegen:
+        options:
+          outputDirectory: ./__generated
+          assetsPath: lib/gql/**
+          addTypename: true
+          addTypenameExcludedPaths:
+            - "**.details"
+            - "QuizDetails"
+            - subscription
+          clients:
+            - graphql_flutter
+          scalars:
+            DateTime:
+              import: package:assist_app/api.dart
+              fromJsonFunctionName: dateTimeFromJson
+              toJsonFunctionName: dateTimeToJson
+              type: DateTime
+            JSON:
+              import: package:assist_app/api.dart
+              fromJsonFunctionName: jsonFromString
+              toJsonFunctionName: jsonToString
+              type: dynamic
+            Email:
+              type: String
+            PhoneNumber:
+              type: String
+            Contact:
+              type: String
+            VerifyCode:
+              type: String
+            Avatar:
+              type: Avatar
+              fromJsonFunctionName: avatarFromJson
+              toJsonFunctionName: avatarToJson
+              import: package:assist_app/api.dart
+            LinguisticUnitSet:
+              type: LinguisticUnitSet
+              import: package:assist_app/api.dart
+              fromJsonFunctionName: linguisticUnitSetFromJson
+              toJsonFunctionName: linguisticUnitSetToJson
+            LinguisticUnit:
+              type: LinguisticUnit
+              import: package:assist_app/api.dart
+              fromJsonFunctionName: linguisticUnitFromJson
+              toJsonFunctionName: linguisticUnitToJson
+
+            Base64Data:
+              type: Uint8List
+              import: package:assist_app/api.dart
+              fromJsonFunctionName: base64DataFromJson
+              toJsonFunctionName: base64DataToJson
+            Hsl:
+              type: String

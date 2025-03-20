@@ -5,10 +5,10 @@ import 'package:assist_app/src/controllers/quiz.dart';
 import 'package:assist_app/src/pages/content/quiz_builder.dart';
 import 'package:assist_app/src/widgets/audio_player.dart';
 import 'package:assist_app/src/widgets/components/item_picture.dart';
-import 'package:assist_utils/assist_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:gql_data/gql_data.dart';
 import 'package:sign_flutter/sign_flutter.dart';
-import 'package:user_data/user_data.dart';
+import 'package:utils/utils.dart';
 
 class StoryPage extends StatefulWidget {
   const StoryPage({super.key, required this.material, required this.onSubmit});
@@ -218,7 +218,7 @@ class _StoryPageState extends State<StoryPage> with TickerProviderStateMixin {
               ),
             ],
             AppButton(
-              onPressed: () {
+              onPressed: (_) {
                 if (_currentPartIndex == story.parts.length - 1) {
                   widget.onSubmit(quizController.buildAnswer());
                 } else {
@@ -315,10 +315,10 @@ class _StoryPageState extends State<StoryPage> with TickerProviderStateMixin {
                     ),
                   ),
                 ),
-                if (controller.valid && isLatest) ...[
+                if (controller.valid.value && isLatest) ...[
                   const SizedBox(height: 16),
                   AppButton(
-                    onPressed: _showNextPart,
+                    onPressed: (_) => _showNextPart(),
                     variant: AppButtonVariant.primary,
                     size: AppSizeVariant.large,
                     title: Text(isLastQuestion ? 'Submit' : 'Next'),

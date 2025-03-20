@@ -2,9 +2,9 @@ import 'package:api/api.dart';
 import 'package:assist_app/src/controllers/journey.dart';
 import 'package:assist_app/src/routes.dart';
 import 'package:assist_app/src/scaffolds/app_scaffold.dart';
-import 'package:assist_utils/assist_utils.dart';
 import 'package:flutter/material.dart';
-import 'package:user_data/user_data.dart';
+import 'package:gql_data/gql_data.dart';
+import 'package:utils/utils.dart';
 
 class JourneysPage extends StatefulWidget {
   const JourneysPage({super.key});
@@ -56,7 +56,7 @@ class _JourneysPageState extends State<JourneysPage> {
                         index == journeys!.length
                             ? Center(
                               child: AppButton(
-                                onPressed: () async {
+                                onPressed: (_) async {
                                   context.createJourney();
                                 },
                                 title: Text("Create a journey"),
@@ -118,9 +118,9 @@ class _JourneyCardState extends State<JourneyCard> {
         ),
       ),
       onTap: () async {
-        await journeyController.setJourney(widget.journey);
+        await journeyController.setJourneyNormal(widget.journey);
         if (context.mounted) {
-          context.journey(widget.journey);
+          context.journey();
         }
       },
       title: Text(widget.journey.name),

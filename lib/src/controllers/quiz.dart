@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
+import 'package:gql_data/gql_data.dart';
 import 'package:sign_flutter/sign_flutter.dart';
-import 'package:user_data/user_data.dart';
 
 class QuizController extends VoidSignal with Slot<void> {
   final List<Fragment$QuizQuestion> questions;
@@ -32,7 +32,7 @@ class QuizController extends VoidSignal with Slot<void> {
       final controller = QuestionController(
         question: question,
         aiFeedbacks: aiFeedbacks,
-        existingAnswer: answer,
+        answer: answer,
       );
 
       controller.addSlot(this);
@@ -99,12 +99,13 @@ class QuizController extends VoidSignal with Slot<void> {
     currentQuestion.value = controllers[currentQuestionIndex - 1].question.id;
   }
 
-  bool get allIsValid => controllers.every((question) => question.valid);
+  bool get allIsValid => controllers.every((question) => question.valid.value);
 
   bool isQuestionValid(String questionId) =>
       controllers
           .firstWhere((question) => question.question.id == questionId)
-          .valid;
+          .valid
+          .value;
 
   Map<String, dynamic> buildAnswer() {
     final answers =
@@ -116,7 +117,7 @@ class QuizController extends VoidSignal with Slot<void> {
   }
 }
 
-class QuestionController extends VoidSignal {
+class QuestionController extends VoidSignal with Slot<void> {
   final Fragment$QuizQuestion question;
   final List<Fragment$AIFeedback> aiFeedbacks;
   final dynamic existingAnswer;
@@ -124,8 +125,11 @@ class QuestionController extends VoidSignal {
   QuestionController({
     required this.question,
     required this.aiFeedbacks,
-    this.existingAnswer,
-  });
+    dynamic answer,
+  }) : existingAnswer = answer == null ? null : answer["answer"],
+       valid = Signal(answer == null ? false : true) {
+    valid.addSlot(this);
+  }
 
   final List<String> behaviors = [];
 
@@ -158,12 +162,10 @@ class QuestionController extends VoidSignal {
     _lastActivity = null;
   }
 
-  bool _valid = false;
+  Signal<bool> valid = Signal(false);
 
-  bool get valid => _valid;
-
-  set valid(bool value) {
-    _valid = value;
+  @override
+  void onValue(void value) {
     setActivity();
     emit();
   }

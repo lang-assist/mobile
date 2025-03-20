@@ -1,13 +1,13 @@
 import 'dart:async';
 
-import 'package:assist_utils/assist_utils.dart';
+import 'package:assist_app/src/widgets/common/measure.dart';
 import 'package:assist_app/src/utils/auth.dart';
-import 'package:assist_app/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:gql_data/gql_data.dart';
 import 'package:sign_flutter/sign_flutter.dart';
-import 'package:user_data/user_data.dart';
+import 'package:utils/utils.dart';
 import 'social_media.dart';
 
 class UserBanner extends StatelessWidget {
@@ -45,14 +45,12 @@ final class _StageConfig {
   final Widget buttonIcon;
   final FutureOr<void> Function() nextPage;
   final Signal<bool> valid;
-  final FocusNode? focusNode;
   final Widget page;
   final _Stage stage;
 
   _StageConfig({
     required this.nextPage,
     required this.valid,
-    required this.focusNode,
     required this.pageTitle,
     required this.buttonTitle,
     required this.buttonIcon,
@@ -81,12 +79,12 @@ class SignUpWithMailScreen extends StatefulWidget {
 }
 
 class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  final newPasswordController = TextEditingController();
-  final userNameController = TextEditingController();
-  final verificationController = TextEditingController();
-  final forgotPasswordController = TextEditingController();
+  final email = "".signal;
+  final password = "".signal;
+  final newPassword = "".signal;
+  final userName = "".signal;
+  final verification = "".signal;
+  final forgotPassword = "".signal;
 
   final pageController = PageController();
 
@@ -98,8 +96,8 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
 
   // initial
   _submitEmail() async {
-    if (emailValidator(emailController.text) == null) {
-      final res = await Api.auth.query.getProvider(emailController.text);
+    if (emailValidator(email.value) == null) {
+      final res = await Api.auth.query.getProvider(email.value);
 
       user = res.user;
       availableMethods = res.providers;
@@ -118,14 +116,11 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
 
   // sign in
   _submitSignInPassword() async {
-    if (passwordValidator(passwordController.text) == null) {
+    if (passwordValidator(password.value) == null) {
       isLoading.value = true;
       try {
         final auth = AuthController();
-        await auth.signInWithEmail(
-          emailController.text,
-          passwordController.text,
-        );
+        await auth.signInWithEmail(email.value, password.value);
         if (auth.hasVerificationSession) {
           addStage(_Stage.verification);
         } else {
@@ -151,21 +146,21 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
 
   // sign up - 1
   _submitSignUpNewPassword() async {
-    if (passwordValidator(newPasswordController.text) == null) {
+    if (passwordValidator(newPassword.value) == null) {
       addStage(_Stage.userName);
     }
   }
 
   // sign up - 2
   _submitSignUpUserName() async {
-    if (usernameValidator(userNameController.text) == null) {
+    if (usernameValidator(userName.value) == null) {
       isLoading.value = true;
       try {
         final auth = AuthController();
         await auth.signUpWithEmail(
-          emailController.text,
-          newPasswordController.text,
-          userNameController.text,
+          email.value,
+          newPassword.value,
+          userName.value,
         );
         if (auth.hasVerificationSession) {
           addStage(_Stage.verification);
@@ -182,13 +177,13 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
 
   // sign up - 3 | sign in - 2
   _submitSignUpInVerification() async {
-    if (verificationValidator(verificationController.text) != null) {
+    if (verificationValidator(verification.value) != null) {
       return;
     }
 
     try {
       final auth = AuthController();
-      await auth.verifyEmail(verificationController.text);
+      await auth.verifyEmail(verification.value);
       // Get.snackbar('Success', 'Email verified successfully');
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) Navigator.of(context).pushNamed("/");
@@ -202,12 +197,12 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
 
   // forgot password - 1
   _submitForgotVerification() async {
-    if (verificationValidator(verificationController.text) != null) {
+    if (verificationValidator(verification.value) != null) {
       return;
     }
     try {
       final auth = AuthController();
-      await auth.verifyForgotPassword(verificationController.text);
+      await auth.verifyForgotPassword(verification.value);
       // Get.snackbar('Success', 'Email verified successfully');
       addStage(_Stage.forgotNewPassword);
     } catch (e) {
@@ -220,12 +215,12 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
   // forgot password - 2
   _submitNewPwdForgot() async {
     try {
-      if (passwordValidator(forgotPasswordController.text) != null) {
+      if (passwordValidator(forgotPassword.value) != null) {
         return;
       }
 
       final auth = AuthController();
-      await auth.setNewPwd(forgotPasswordController.text);
+      await auth.setNewPwd(forgotPassword.value);
       // Get.snackbar('Success', 'Password changed successfully');
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) Navigator.of(context).pushNamed("/");
@@ -239,13 +234,6 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
 
   bool emailSubmitted = false;
 
-  final emailFocusNode = FocusNode();
-  final passwordFocusNode = FocusNode();
-  final newPasswordFocusNode = FocusNode();
-  final userNameFocusNode = FocusNode();
-  final verificationFocusNode = FocusNode();
-  final forgotPasswordFocusNode = FocusNode();
-
   final emailValid = false.signal;
   final passwordValid = false.signal;
   final newPasswordValid = false.signal;
@@ -256,22 +244,20 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
   double height = 190;
 
   Widget _page(Widget child) {
-    return Builder(
-      builder: (ctx) {
-        return SingleChildScrollView(
-          child: MeasureSize(
-            onChange: (size) {
-              setState(() {
-                height = size.height + 100;
-              });
-            },
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [child],
-            ),
-          ),
-        );
-      },
+    return SingleChildScrollView(
+      child: MeasureSize(
+        onChange: (size) {
+          final newHeight = size.height + 100;
+          if (newHeight != height) {
+            height = newHeight;
+            setState(() {});
+          }
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [child],
+        ),
+      ),
     );
   }
 
@@ -290,15 +276,14 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
       stage: _Stage.email,
       nextPage: _submitEmail,
       valid: emailValid,
-      focusNode: emailFocusNode,
-      pageTitle: 'Welcome to',
+      pageTitle: 'Welcome to Broca Agent',
       buttonTitle: 'Next',
       buttonIcon: AppIcons.name(ImgGenIconNames.email),
       page: AppTextFormField(
-        focusNode: emailFocusNode,
+        key: ValueKey("email-field"),
         label: 'E-Mail',
         onEditingComplete: _submitEmail,
-        controller: emailController,
+        signal: email,
         valid: emailValid,
         validator: emailValidator,
         autofillHints: const [AutofillHints.email],
@@ -314,8 +299,7 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
       stage: _Stage.password,
       nextPage: _submitSignInPassword,
       valid: passwordValid,
-      focusNode: passwordFocusNode,
-      pageTitle: 'Sign In to',
+      pageTitle: 'Sign In to Broca Agent',
       buttonTitle: 'Sign In',
       buttonIcon: AppIcons.name(ImgGenIconNames.email),
       page: Builder(
@@ -331,17 +315,17 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
               AppButton(
                 size: AppSizeVariant.small,
                 variant: AppButtonVariant.text,
-                onPressed: () {
+                onPressed: (_) {
                   addStage(_Stage.email);
                 },
                 title: const Text("Not you?"),
               ),
               if (hasPwd)
                 AppTextFormField(
+                  key: ValueKey("password-field"),
                   label: "Password",
                   validator: passwordValidator,
-                  controller: passwordController,
-                  focusNode: passwordFocusNode,
+                  signal: password,
                   valid: passwordValid,
                   onEditingComplete: _submitSignInPassword,
                 ),
@@ -358,10 +342,10 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
                   AppButton(
                     size: AppSizeVariant.small,
                     variant: AppButtonVariant.text,
-                    onPressed: () async {
+                    onPressed: (_) async {
                       final auth = AuthController();
 
-                      await auth.forgotPassword(emailController.text);
+                      await auth.forgotPassword(email.value);
 
                       if (auth.hasVerificationSession) {
                         addStage(_Stage.forgotVerification);
@@ -387,15 +371,14 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
       stage: _Stage.newPassword,
       nextPage: _submitSignUpNewPassword,
       valid: newPasswordValid,
-      focusNode: newPasswordFocusNode,
-      pageTitle: 'Sign Up to',
+      pageTitle: 'Sign Up to Broca Agent',
       buttonTitle: 'Next',
       buttonIcon: AppIcons.name(ImgGenIconNames.next),
       page: AppTextFormField(
-        focusNode: newPasswordFocusNode,
+        key: ValueKey("new-password-field"),
+        signal: newPassword,
         label: 'New Password',
         hint: 'Enter your new password',
-        controller: newPasswordController,
         valid: newPasswordValid,
         validator: passwordValidator,
         obscureText: true,
@@ -414,15 +397,14 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
       stage: _Stage.userName,
       nextPage: _submitSignUpUserName,
       valid: userNameValid,
-      focusNode: userNameFocusNode,
-      pageTitle: 'Sign Up to',
+      pageTitle: 'Sign Up to Broca Agent',
       buttonTitle: 'Sign Up',
       buttonIcon: AppIcons.name(ImgGenIconNames.next),
       page: AppTextFormField(
-        focusNode: userNameFocusNode,
+        key: ValueKey("username-field"),
+        signal: userName,
         label: 'Username',
         hint: 'Enter your username',
-        controller: userNameController,
         valid: userNameValid,
         validator: usernameValidator,
         autofillHints: const [AutofillHints.username],
@@ -439,15 +421,14 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
       stage: forgot ? _Stage.forgotVerification : _Stage.verification,
       nextPage: next,
       valid: verificationValid,
-      focusNode: verificationFocusNode,
-      pageTitle: 'Verify with',
+      pageTitle: 'Verify with Broca Agent',
       buttonTitle: 'Verify',
       buttonIcon: AppIcons.name(ImgGenIconNames.next),
       page: AppTextFormField(
-        focusNode: verificationFocusNode,
+        key: ValueKey("verification-field"),
+        signal: verification,
         label: 'Verification Code',
         hint: 'Enter your 6 digit verification code',
-        controller: verificationController,
         valid: verificationValid,
         validator: verificationValidator,
         keyboardType: TextInputType.number,
@@ -463,15 +444,14 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
       stage: _Stage.forgotNewPassword,
       nextPage: _submitNewPwdForgot,
       valid: forgotPasswordValid,
-      focusNode: forgotPasswordFocusNode,
       pageTitle: 'Set New Password',
       buttonTitle: 'Set Password',
       buttonIcon: AppIcons.name(ImgGenIconNames.next),
       page: AppTextFormField(
-        focusNode: forgotPasswordFocusNode,
+        key: ValueKey("forgot-password-field"),
+        signal: forgotPassword,
         label: 'New Password',
         hint: 'Enter your new password',
-        controller: forgotPasswordController,
         valid: forgotPasswordValid,
         validator: passwordValidator,
         keyboardType: TextInputType.visiblePassword,
@@ -494,7 +474,6 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
   }
 
   addStage(_Stage stage) {
-    final config = stageConfigs[stage]!;
     _nextFrame(() {
       pageController
           .animateToPage(
@@ -504,7 +483,6 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
           )
           .then((_) {
             _nextFrame(() {
-              config.focusNode?.requestFocus();
               setState(() {
                 currentStage = _stageIndex(stage);
               });
@@ -522,10 +500,12 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
     super.initState();
   }
 
+  final scKey = GlobalKey();
+
   @override
   Widget build(BuildContext context) {
     return AuthScaffold(
-      key: const ValueKey("sign-up-with-mail"),
+      key: scKey,
       title: currentConfig.pageTitle,
       children: [
         AnimatedContainer(
@@ -540,17 +520,16 @@ class _SignUpWithMailScreenState extends State<SignUpWithMailScreen> {
                     physics: const NeverScrollableScrollPhysics(),
                     onPageChanged: (index) {},
                     controller: pageController,
-                    children: stageConfigs.values
-                        .map((e) => _page(e.page))
-                        .toList(growable: false),
+                    children:
+                        stageConfigs.values.map((e) => _page(e.page)).toList(),
                   ),
                 ),
               ),
               [currentConfig.valid, isLoading].multiSignal.builder((_) {
                 return AppButton(
-                  isLoading: isLoading.value,
-                  isActive: currentConfig.valid.value,
-                  onPressed: currentConfig.nextPage,
+                  isLoading: isLoading,
+                  isActive: currentConfig.valid,
+                  onPressed: (_) => currentConfig.nextPage(),
                   key: ValueKey("button-$currentStage"),
                   title: Padding(
                     key: ValueKey("button-title-padding-$currentStage"),

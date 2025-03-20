@@ -4,17 +4,17 @@ import 'package:api/api.dart';
 import 'package:assist_app/src/controllers/journey.dart';
 import 'package:assist_app/src/controllers/path.dart';
 import 'package:assist_app/src/pages/content/material_page.dart';
+import 'package:assist_app/src/pages/documentation.dart';
 import 'package:assist_app/src/pages/home/create_journey.dart';
-import 'package:assist_app/src/pages/home/inital_test.dart';
 import 'package:assist_app/src/pages/showcase/theme_showcase.dart';
-import 'package:assist_utils/assist_utils.dart';
-import 'package:assist_app/src/pages/auth/sign_up_main_screen.dart';
+import 'package:assist_app/src/pages/auth/auth.dart';
 import 'package:assist_app/src/pages/home/home.dart';
 import 'package:assist_app/src/utils/device.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:gql_data/gql_data.dart';
 import 'package:sign_flutter/sign_flutter.dart';
-import 'package:user_data/user_data.dart';
+import 'package:utils/utils.dart';
 import 'pages/home/journeys.dart';
 import 'pages/splash.dart';
 import 'pages/subs/subscriptions.dart';
@@ -49,7 +49,16 @@ final Map<String, AppRoute> routes = {
   "/subscription": AppRoute(builder: SubscriptionPage.new, middlewares: {}),
   "/journeys": AppRoute(builder: JourneysPage.new, middlewares: {}),
   "/journeys/create": AppRoute(builder: CreateJourneyPage.new, middlewares: {}),
-  "/journeys/initial": AppRoute(builder: InitialTestPage.new, middlewares: {}),
+  "/journey-docs": AppRoute(builder: JourneyDocsPage.new, middlewares: {}),
+  "/documentation/:documentation": AppRoute(
+    builder: DocumentationPage.new,
+    middlewares: {
+      "documentation": (value, redirect) async {
+        final documentation = await Api.queries.userDoc(value);
+        return documentation;
+      },
+    },
+  ),
   "/material/:material": AppRoute(
     builder: MaterialPageView.new,
     middlewares: {
@@ -126,13 +135,6 @@ FutureOr<String?> splashLoad(String location) {
               if (hasJourney) {
                 if (journeyUnallowed.contains(location)) {
                   return redirect(location, "/");
-                }
-
-                if (journeyController.pathController.isInitial) {
-                  if (location == "/journeys/initial") {
-                    return redirect(location, null);
-                  }
-                  return redirect(location, "/journeys/initial");
                 }
 
                 return redirect(location, null);
@@ -284,12 +286,12 @@ extension Routes on BuildContext {
     return _ParametersHolder.of(this).get<T>(name);
   }
 
-  Future<void> _toRoute(String route) {
+  Future<void> _toRoute(String route, [Map<String, dynamic>? parameters]) {
     // if (kIsWeb) {
     //   go(route);
     //   return Future.value();
     // }
-    return push(route);
+    return push(route, extra: parameters);
   }
 
   Future<void> splash() {
@@ -316,17 +318,30 @@ extension Routes on BuildContext {
     return _toRoute("/journeys/create");
   }
 
-  Future<void> journey(Fragment$Journey journey) async {
-    await journeyController.setJourney(journey);
+  Future<void> journey() async {
+    //await journeyController.setJourneyDetailed(journey);
+    if (!journeyController.hasJourney) {
+      throw Exception("Journey not found");
+    }
     return _toRoute("/");
-  }
-
-  Future<void> journeyInitial() {
-    return _toRoute("/journeys/initial");
   }
 
   Future<void> material(String id) {
     return _toRoute("/material/$id");
+  }
+
+  Future<void> docWithId(String id) {
+    return _toRoute("/documentation/$id");
+  }
+
+  Future<void> doc(Fragment$UserDoc documentation) {
+    return _toRoute("/documentation/${documentation.id}", {
+      "documentation": documentation,
+    });
+  }
+
+  Future<void> journeyDocs() {
+    return _toRoute("/journey-docs");
   }
 }
 

@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:api/api.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:gql_data/gql_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:user_data/user_data.dart';
 
 class AuthController extends ChangeNotifier {
   AuthController._();

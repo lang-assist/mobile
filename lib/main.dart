@@ -1,10 +1,10 @@
 import 'package:api/api.dart';
-import 'package:assist_utils/assist_utils.dart';
 import 'package:assist_app/src/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sign_flutter/sign_flutter.dart';
+import 'package:utils/utils.dart';
 
 void main() async {
   usePathUrlStrategy();

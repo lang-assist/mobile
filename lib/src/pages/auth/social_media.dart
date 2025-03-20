@@ -1,7 +1,7 @@
-import 'package:assist_utils/assist_utils.dart';
 import 'package:go_router/go_router.dart';
 import 'package:assist_app/src/pages/auth/sign_up_with_mail_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:utils/utils.dart';
 
 class GoogleSignInButton extends StatelessWidget {
   const GoogleSignInButton({super.key});
@@ -10,7 +10,7 @@ class GoogleSignInButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppButton(
       variant: AppButtonVariant.outlined,
-      onPressed: () {},
+      onPressed: (_) {},
       title: Row(
         spacing: 8,
         children: [
@@ -36,7 +36,7 @@ class AppleSignInButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppButton(
       variant: AppButtonVariant.outlined,
-      onPressed: () {},
+      onPressed: (_) {},
       title: Row(
         spacing: 8,
         children: [
@@ -73,7 +73,7 @@ class SocialMediaIcons extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: AppButton(
-              onPressed: () async {
+              onPressed: (_) async {
                 // await Get.toNamed(RouteNames.signUpWithMailScreen,
                 //     parameters: Get.parameters as Map<String, String>?);
                 // Get.back();
