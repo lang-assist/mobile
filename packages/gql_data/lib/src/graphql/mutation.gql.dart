@@ -6844,6 +6844,7 @@ const documentNodeMutationAnswerMaterial = DocumentNode(definitions: [
   fragmentDefinitionStagePartDocumentation,
   fragmentDefinitionStageSentence,
   fragmentDefinitionStageWord,
+  fragmentDefinitionStageGrapheme,
 ]);
 Mutation$AnswerMaterial _parserFn$Mutation$AnswerMaterial(
         Map<String, dynamic> data) =>

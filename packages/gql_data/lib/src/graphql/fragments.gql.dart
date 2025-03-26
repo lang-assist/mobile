@@ -3051,6 +3051,296 @@ extension ClientExtension$Fragment$StageWord on graphql.GraphQLClient {
   }
 }
 
+class Fragment$StageGrapheme {
+  Fragment$StageGrapheme({
+    required this.grapheme,
+    this.ref_ID,
+    this.practices,
+    this.use_cases,
+    this.$__typename = 'StageGrapheme',
+  });
+
+  factory Fragment$StageGrapheme.fromJson(Map<String, dynamic> json) {
+    final l$grapheme = json['grapheme'];
+    final l$ref_ID = json['ref_ID'];
+    final l$practices = json['practices'];
+    final l$use_cases = json['use_cases'];
+    final l$$__typename = json['__typename'];
+    return Fragment$StageGrapheme(
+      grapheme: (l$grapheme as String),
+      ref_ID: (l$ref_ID as String?),
+      practices:
+          (l$practices as List<dynamic>?)?.map((e) => (e as String)).toList(),
+      use_cases:
+          (l$use_cases as List<dynamic>?)?.map((e) => (e as String)).toList(),
+      $__typename: (l$$__typename as String),
+    );
+  }
+
+  final String grapheme;
+
+  final String? ref_ID;
+
+  final List<String>? practices;
+
+  final List<String>? use_cases;
+
+  final String $__typename;
+
+  Map<String, dynamic> toJson() {
+    final _resultData = <String, dynamic>{};
+    final l$grapheme = grapheme;
+    _resultData['grapheme'] = l$grapheme;
+    final l$ref_ID = ref_ID;
+    _resultData['ref_ID'] = l$ref_ID;
+    final l$practices = practices;
+    _resultData['practices'] = l$practices?.map((e) => e).toList();
+    final l$use_cases = use_cases;
+    _resultData['use_cases'] = l$use_cases?.map((e) => e).toList();
+    final l$$__typename = $__typename;
+    _resultData['__typename'] = l$$__typename;
+    return _resultData;
+  }
+
+  @override
+  int get hashCode {
+    final l$grapheme = grapheme;
+    final l$ref_ID = ref_ID;
+    final l$practices = practices;
+    final l$use_cases = use_cases;
+    final l$$__typename = $__typename;
+    return Object.hashAll([
+      l$grapheme,
+      l$ref_ID,
+      l$practices == null ? null : Object.hashAll(l$practices.map((v) => v)),
+      l$use_cases == null ? null : Object.hashAll(l$use_cases.map((v) => v)),
+      l$$__typename,
+    ]);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other is! Fragment$StageGrapheme || runtimeType != other.runtimeType) {
+      return false;
+    }
+    final l$grapheme = grapheme;
+    final lOther$grapheme = other.grapheme;
+    if (l$grapheme != lOther$grapheme) {
+      return false;
+    }
+    final l$ref_ID = ref_ID;
+    final lOther$ref_ID = other.ref_ID;
+    if (l$ref_ID != lOther$ref_ID) {
+      return false;
+    }
+    final l$practices = practices;
+    final lOther$practices = other.practices;
+    if (l$practices != null && lOther$practices != null) {
+      if (l$practices.length != lOther$practices.length) {
+        return false;
+      }
+      for (int i = 0; i < l$practices.length; i++) {
+        final l$practices$entry = l$practices[i];
+        final lOther$practices$entry = lOther$practices[i];
+        if (l$practices$entry != lOther$practices$entry) {
+          return false;
+        }
+      }
+    } else if (l$practices != lOther$practices) {
+      return false;
+    }
+    final l$use_cases = use_cases;
+    final lOther$use_cases = other.use_cases;
+    if (l$use_cases != null && lOther$use_cases != null) {
+      if (l$use_cases.length != lOther$use_cases.length) {
+        return false;
+      }
+      for (int i = 0; i < l$use_cases.length; i++) {
+        final l$use_cases$entry = l$use_cases[i];
+        final lOther$use_cases$entry = lOther$use_cases[i];
+        if (l$use_cases$entry != lOther$use_cases$entry) {
+          return false;
+        }
+      }
+    } else if (l$use_cases != lOther$use_cases) {
+      return false;
+    }
+    final l$$__typename = $__typename;
+    final lOther$$__typename = other.$__typename;
+    if (l$$__typename != lOther$$__typename) {
+      return false;
+    }
+    return true;
+  }
+}
+
+extension UtilityExtension$Fragment$StageGrapheme on Fragment$StageGrapheme {
+  CopyWith$Fragment$StageGrapheme<Fragment$StageGrapheme> get copyWith =>
+      CopyWith$Fragment$StageGrapheme(
+        this,
+        (i) => i,
+      );
+}
+
+abstract class CopyWith$Fragment$StageGrapheme<TRes> {
+  factory CopyWith$Fragment$StageGrapheme(
+    Fragment$StageGrapheme instance,
+    TRes Function(Fragment$StageGrapheme) then,
+  ) = _CopyWithImpl$Fragment$StageGrapheme;
+
+  factory CopyWith$Fragment$StageGrapheme.stub(TRes res) =
+      _CopyWithStubImpl$Fragment$StageGrapheme;
+
+  TRes call({
+    String? grapheme,
+    String? ref_ID,
+    List<String>? practices,
+    List<String>? use_cases,
+    String? $__typename,
+  });
+}
+
+class _CopyWithImpl$Fragment$StageGrapheme<TRes>
+    implements CopyWith$Fragment$StageGrapheme<TRes> {
+  _CopyWithImpl$Fragment$StageGrapheme(
+    this._instance,
+    this._then,
+  );
+
+  final Fragment$StageGrapheme _instance;
+
+  final TRes Function(Fragment$StageGrapheme) _then;
+
+  static const _undefined = <dynamic, dynamic>{};
+
+  TRes call({
+    Object? grapheme = _undefined,
+    Object? ref_ID = _undefined,
+    Object? practices = _undefined,
+    Object? use_cases = _undefined,
+    Object? $__typename = _undefined,
+  }) =>
+      _then(Fragment$StageGrapheme(
+        grapheme: grapheme == _undefined || grapheme == null
+            ? _instance.grapheme
+            : (grapheme as String),
+        ref_ID: ref_ID == _undefined ? _instance.ref_ID : (ref_ID as String?),
+        practices: practices == _undefined
+            ? _instance.practices
+            : (practices as List<String>?),
+        use_cases: use_cases == _undefined
+            ? _instance.use_cases
+            : (use_cases as List<String>?),
+        $__typename: $__typename == _undefined || $__typename == null
+            ? _instance.$__typename
+            : ($__typename as String),
+      ));
+}
+
+class _CopyWithStubImpl$Fragment$StageGrapheme<TRes>
+    implements CopyWith$Fragment$StageGrapheme<TRes> {
+  _CopyWithStubImpl$Fragment$StageGrapheme(this._res);
+
+  TRes _res;
+
+  call({
+    String? grapheme,
+    String? ref_ID,
+    List<String>? practices,
+    List<String>? use_cases,
+    String? $__typename,
+  }) =>
+      _res;
+}
+
+const fragmentDefinitionStageGrapheme = FragmentDefinitionNode(
+  name: NameNode(value: 'StageGrapheme'),
+  typeCondition: TypeConditionNode(
+      on: NamedTypeNode(
+    name: NameNode(value: 'StageGrapheme'),
+    isNonNull: false,
+  )),
+  directives: [],
+  selectionSet: SelectionSetNode(selections: [
+    FieldNode(
+      name: NameNode(value: 'grapheme'),
+      alias: null,
+      arguments: [],
+      directives: [],
+      selectionSet: null,
+    ),
+    FieldNode(
+      name: NameNode(value: 'ref_ID'),
+      alias: null,
+      arguments: [],
+      directives: [],
+      selectionSet: null,
+    ),
+    FieldNode(
+      name: NameNode(value: 'practices'),
+      alias: null,
+      arguments: [],
+      directives: [],
+      selectionSet: null,
+    ),
+    FieldNode(
+      name: NameNode(value: 'use_cases'),
+      alias: null,
+      arguments: [],
+      directives: [],
+      selectionSet: null,
+    ),
+    FieldNode(
+      name: NameNode(value: '__typename'),
+      alias: null,
+      arguments: [],
+      directives: [],
+      selectionSet: null,
+    ),
+  ]),
+);
+const documentNodeFragmentStageGrapheme = DocumentNode(definitions: [
+  fragmentDefinitionStageGrapheme,
+]);
+
+extension ClientExtension$Fragment$StageGrapheme on graphql.GraphQLClient {
+  void writeFragment$StageGrapheme({
+    required Fragment$StageGrapheme data,
+    required Map<String, dynamic> idFields,
+    bool broadcast = true,
+  }) =>
+      this.writeFragment(
+        graphql.FragmentRequest(
+          idFields: idFields,
+          fragment: const graphql.Fragment(
+            fragmentName: 'StageGrapheme',
+            document: documentNodeFragmentStageGrapheme,
+          ),
+        ),
+        data: data.toJson(),
+        broadcast: broadcast,
+      );
+  Fragment$StageGrapheme? readFragment$StageGrapheme({
+    required Map<String, dynamic> idFields,
+    bool optimistic = true,
+  }) {
+    final result = this.readFragment(
+      graphql.FragmentRequest(
+        idFields: idFields,
+        fragment: const graphql.Fragment(
+          fragmentName: 'StageGrapheme',
+          document: documentNodeFragmentStageGrapheme,
+        ),
+      ),
+      optimistic: optimistic,
+    );
+    return result == null ? null : Fragment$StageGrapheme.fromJson(result);
+  }
+}
+
 class Fragment$StagePart {
   Fragment$StagePart({
     required this.id,
@@ -3060,6 +3350,7 @@ class Fragment$StagePart {
     this.documentation,
     this.sentences,
     this.words,
+    this.graphemes,
     this.$__typename = 'StagePart',
   });
 
@@ -3071,6 +3362,7 @@ class Fragment$StagePart {
     final l$documentation = json['documentation'];
     final l$sentences = json['sentences'];
     final l$words = json['words'];
+    final l$graphemes = json['graphemes'];
     final l$$__typename = json['__typename'];
     return Fragment$StagePart(
       id: (l$id as String),
@@ -3091,6 +3383,10 @@ class Fragment$StagePart {
       words: (l$words as List<dynamic>?)
           ?.map((e) => Fragment$StageWord.fromJson((e as Map<String, dynamic>)))
           .toList(),
+      graphemes: (l$graphemes as List<dynamic>?)
+          ?.map((e) =>
+              Fragment$StageGrapheme.fromJson((e as Map<String, dynamic>)))
+          .toList(),
       $__typename: (l$$__typename as String),
     );
   }
@@ -3108,6 +3404,8 @@ class Fragment$StagePart {
   final List<Fragment$StageSentence>? sentences;
 
   final List<Fragment$StageWord>? words;
+
+  final List<Fragment$StageGrapheme>? graphemes;
 
   final String $__typename;
 
@@ -3127,6 +3425,8 @@ class Fragment$StagePart {
     _resultData['sentences'] = l$sentences?.map((e) => e.toJson()).toList();
     final l$words = words;
     _resultData['words'] = l$words?.map((e) => e.toJson()).toList();
+    final l$graphemes = graphemes;
+    _resultData['graphemes'] = l$graphemes?.map((e) => e.toJson()).toList();
     final l$$__typename = $__typename;
     _resultData['__typename'] = l$$__typename;
     return _resultData;
@@ -3141,6 +3441,7 @@ class Fragment$StagePart {
     final l$documentation = documentation;
     final l$sentences = sentences;
     final l$words = words;
+    final l$graphemes = graphemes;
     final l$$__typename = $__typename;
     return Object.hashAll([
       l$id,
@@ -3150,6 +3451,7 @@ class Fragment$StagePart {
       l$documentation,
       l$sentences == null ? null : Object.hashAll(l$sentences.map((v) => v)),
       l$words == null ? null : Object.hashAll(l$words.map((v) => v)),
+      l$graphemes == null ? null : Object.hashAll(l$graphemes.map((v) => v)),
       l$$__typename,
     ]);
   }
@@ -3219,6 +3521,22 @@ class Fragment$StagePart {
     } else if (l$words != lOther$words) {
       return false;
     }
+    final l$graphemes = graphemes;
+    final lOther$graphemes = other.graphemes;
+    if (l$graphemes != null && lOther$graphemes != null) {
+      if (l$graphemes.length != lOther$graphemes.length) {
+        return false;
+      }
+      for (int i = 0; i < l$graphemes.length; i++) {
+        final l$graphemes$entry = l$graphemes[i];
+        final lOther$graphemes$entry = lOther$graphemes[i];
+        if (l$graphemes$entry != lOther$graphemes$entry) {
+          return false;
+        }
+      }
+    } else if (l$graphemes != lOther$graphemes) {
+      return false;
+    }
     final l$$__typename = $__typename;
     final lOther$$__typename = other.$__typename;
     if (l$$__typename != lOther$$__typename) {
@@ -3253,6 +3571,7 @@ abstract class CopyWith$Fragment$StagePart<TRes> {
     Fragment$StagePartDocumentation? documentation,
     List<Fragment$StageSentence>? sentences,
     List<Fragment$StageWord>? words,
+    List<Fragment$StageGrapheme>? graphemes,
     String? $__typename,
   });
   CopyWith$Fragment$StagePartMaterial<TRes> get material;
@@ -3265,6 +3584,11 @@ abstract class CopyWith$Fragment$StagePart<TRes> {
   TRes words(
       Iterable<Fragment$StageWord>? Function(
               Iterable<CopyWith$Fragment$StageWord<Fragment$StageWord>>?)
+          _fn);
+  TRes graphemes(
+      Iterable<Fragment$StageGrapheme>? Function(
+              Iterable<
+                  CopyWith$Fragment$StageGrapheme<Fragment$StageGrapheme>>?)
           _fn);
 }
 
@@ -3289,6 +3613,7 @@ class _CopyWithImpl$Fragment$StagePart<TRes>
     Object? documentation = _undefined,
     Object? sentences = _undefined,
     Object? words = _undefined,
+    Object? graphemes = _undefined,
     Object? $__typename = _undefined,
   }) =>
       _then(Fragment$StagePart(
@@ -3311,6 +3636,9 @@ class _CopyWithImpl$Fragment$StagePart<TRes>
         words: words == _undefined
             ? _instance.words
             : (words as List<Fragment$StageWord>?),
+        graphemes: graphemes == _undefined
+            ? _instance.graphemes
+            : (graphemes as List<Fragment$StageGrapheme>?),
         $__typename: $__typename == _undefined || $__typename == null
             ? _instance.$__typename
             : ($__typename as String),
@@ -3353,6 +3681,18 @@ class _CopyWithImpl$Fragment$StagePart<TRes>
                 e,
                 (i) => i,
               )))?.toList());
+
+  TRes graphemes(
+          Iterable<Fragment$StageGrapheme>? Function(
+                  Iterable<
+                      CopyWith$Fragment$StageGrapheme<Fragment$StageGrapheme>>?)
+              _fn) =>
+      call(
+          graphemes: _fn(
+              _instance.graphemes?.map((e) => CopyWith$Fragment$StageGrapheme(
+                    e,
+                    (i) => i,
+                  )))?.toList());
 }
 
 class _CopyWithStubImpl$Fragment$StagePart<TRes>
@@ -3369,6 +3709,7 @@ class _CopyWithStubImpl$Fragment$StagePart<TRes>
     Fragment$StagePartDocumentation? documentation,
     List<Fragment$StageSentence>? sentences,
     List<Fragment$StageWord>? words,
+    List<Fragment$StageGrapheme>? graphemes,
     String? $__typename,
   }) =>
       _res;
@@ -3382,6 +3723,8 @@ class _CopyWithStubImpl$Fragment$StagePart<TRes>
   sentences(_fn) => _res;
 
   words(_fn) => _res;
+
+  graphemes(_fn) => _res;
 }
 
 const fragmentDefinitionStagePart = FragmentDefinitionNode(
@@ -3491,6 +3834,25 @@ const fragmentDefinitionStagePart = FragmentDefinitionNode(
       ]),
     ),
     FieldNode(
+      name: NameNode(value: 'graphemes'),
+      alias: null,
+      arguments: [],
+      directives: [],
+      selectionSet: SelectionSetNode(selections: [
+        FragmentSpreadNode(
+          name: NameNode(value: 'StageGrapheme'),
+          directives: [],
+        ),
+        FieldNode(
+          name: NameNode(value: '__typename'),
+          alias: null,
+          arguments: [],
+          directives: [],
+          selectionSet: null,
+        ),
+      ]),
+    ),
+    FieldNode(
       name: NameNode(value: '__typename'),
       alias: null,
       arguments: [],
@@ -3505,6 +3867,7 @@ const documentNodeFragmentStagePart = DocumentNode(definitions: [
   fragmentDefinitionStagePartDocumentation,
   fragmentDefinitionStageSentence,
   fragmentDefinitionStageWord,
+  fragmentDefinitionStageGrapheme,
 ]);
 
 extension ClientExtension$Fragment$StagePart on graphql.GraphQLClient {
@@ -3934,6 +4297,7 @@ const documentNodeFragmentDetailedStage = DocumentNode(definitions: [
   fragmentDefinitionStagePartDocumentation,
   fragmentDefinitionStageSentence,
   fragmentDefinitionStageWord,
+  fragmentDefinitionStageGrapheme,
 ]);
 
 extension ClientExtension$Fragment$DetailedStage on graphql.GraphQLClient {
@@ -8777,6 +9141,7 @@ class Fragment$StoryPart {
   Fragment$StoryPart({
     required this.type,
     this.ssml,
+    this.character,
     required this.hasPicture,
     this.question,
     this.audioId,
@@ -8787,6 +9152,7 @@ class Fragment$StoryPart {
   factory Fragment$StoryPart.fromJson(Map<String, dynamic> json) {
     final l$type = json['type'];
     final l$ssml = json['ssml'];
+    final l$character = json['character'];
     final l$hasPicture = json['hasPicture'];
     final l$question = json['question'];
     final l$audioId = json['audioId'];
@@ -8795,6 +9161,7 @@ class Fragment$StoryPart {
     return Fragment$StoryPart(
       type: fromJson$Enum$StoryPartType((l$type as String)),
       ssml: (l$ssml as String?),
+      character: (l$character as String?),
       hasPicture: (l$hasPicture as bool),
       question: l$question == null
           ? null
@@ -8809,6 +9176,8 @@ class Fragment$StoryPart {
   final Enum$StoryPartType type;
 
   final String? ssml;
+
+  final String? character;
 
   final bool hasPicture;
 
@@ -8826,6 +9195,8 @@ class Fragment$StoryPart {
     _resultData['type'] = toJson$Enum$StoryPartType(l$type);
     final l$ssml = ssml;
     _resultData['ssml'] = l$ssml;
+    final l$character = character;
+    _resultData['character'] = l$character;
     final l$hasPicture = hasPicture;
     _resultData['hasPicture'] = l$hasPicture;
     final l$question = question;
@@ -8843,6 +9214,7 @@ class Fragment$StoryPart {
   int get hashCode {
     final l$type = type;
     final l$ssml = ssml;
+    final l$character = character;
     final l$hasPicture = hasPicture;
     final l$question = question;
     final l$audioId = audioId;
@@ -8851,6 +9223,7 @@ class Fragment$StoryPart {
     return Object.hashAll([
       l$type,
       l$ssml,
+      l$character,
       l$hasPicture,
       l$question,
       l$audioId,
@@ -8875,6 +9248,11 @@ class Fragment$StoryPart {
     final l$ssml = ssml;
     final lOther$ssml = other.ssml;
     if (l$ssml != lOther$ssml) {
+      return false;
+    }
+    final l$character = character;
+    final lOther$character = other.character;
+    if (l$character != lOther$character) {
       return false;
     }
     final l$hasPicture = hasPicture;
@@ -8926,6 +9304,7 @@ abstract class CopyWith$Fragment$StoryPart<TRes> {
   TRes call({
     Enum$StoryPartType? type,
     String? ssml,
+    String? character,
     bool? hasPicture,
     Fragment$QuizQuestion? question,
     String? audioId,
@@ -8951,6 +9330,7 @@ class _CopyWithImpl$Fragment$StoryPart<TRes>
   TRes call({
     Object? type = _undefined,
     Object? ssml = _undefined,
+    Object? character = _undefined,
     Object? hasPicture = _undefined,
     Object? question = _undefined,
     Object? audioId = _undefined,
@@ -8962,6 +9342,9 @@ class _CopyWithImpl$Fragment$StoryPart<TRes>
             ? _instance.type
             : (type as Enum$StoryPartType),
         ssml: ssml == _undefined ? _instance.ssml : (ssml as String?),
+        character: character == _undefined
+            ? _instance.character
+            : (character as String?),
         hasPicture: hasPicture == _undefined || hasPicture == null
             ? _instance.hasPicture
             : (hasPicture as bool),
@@ -8996,6 +9379,7 @@ class _CopyWithStubImpl$Fragment$StoryPart<TRes>
   call({
     Enum$StoryPartType? type,
     String? ssml,
+    String? character,
     bool? hasPicture,
     Fragment$QuizQuestion? question,
     String? audioId,
@@ -9026,6 +9410,13 @@ const fragmentDefinitionStoryPart = FragmentDefinitionNode(
     ),
     FieldNode(
       name: NameNode(value: 'ssml'),
+      alias: null,
+      arguments: [],
+      directives: [],
+      selectionSet: null,
+    ),
+    FieldNode(
+      name: NameNode(value: 'character'),
       alias: null,
       arguments: [],
       directives: [],
@@ -13264,6 +13655,7 @@ const documentNodeFragmentAnswerMaterialResponse = DocumentNode(definitions: [
   fragmentDefinitionStagePartDocumentation,
   fragmentDefinitionStageSentence,
   fragmentDefinitionStageWord,
+  fragmentDefinitionStageGrapheme,
 ]);
 
 extension ClientExtension$Fragment$AnswerMaterialResponse

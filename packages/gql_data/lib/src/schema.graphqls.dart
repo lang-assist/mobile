@@ -4037,9 +4037,10 @@ Enum$StageStatus fromJson$Enum$StageStatus(String value) {
 
 enum Enum$StagePartType {
   DOCUMENTATION,
-  TASK,
+  TEST,
   WORDS,
   SENTENCES,
+  GRAPHEMES,
   $unknown;
 
   factory Enum$StagePartType.fromJson(String value) =>
@@ -4052,12 +4053,14 @@ String toJson$Enum$StagePartType(Enum$StagePartType e) {
   switch (e) {
     case Enum$StagePartType.DOCUMENTATION:
       return r'DOCUMENTATION';
-    case Enum$StagePartType.TASK:
-      return r'TASK';
+    case Enum$StagePartType.TEST:
+      return r'TEST';
     case Enum$StagePartType.WORDS:
       return r'WORDS';
     case Enum$StagePartType.SENTENCES:
       return r'SENTENCES';
+    case Enum$StagePartType.GRAPHEMES:
+      return r'GRAPHEMES';
     case Enum$StagePartType.$unknown:
       return r'$unknown';
   }
@@ -4067,12 +4070,14 @@ Enum$StagePartType fromJson$Enum$StagePartType(String value) {
   switch (value) {
     case r'DOCUMENTATION':
       return Enum$StagePartType.DOCUMENTATION;
-    case r'TASK':
-      return Enum$StagePartType.TASK;
+    case r'TEST':
+      return Enum$StagePartType.TEST;
     case r'WORDS':
       return Enum$StagePartType.WORDS;
     case r'SENTENCES':
       return Enum$StagePartType.SENTENCES;
+    case r'GRAPHEMES':
+      return Enum$StagePartType.GRAPHEMES;
     default:
       return Enum$StagePartType.$unknown;
   }

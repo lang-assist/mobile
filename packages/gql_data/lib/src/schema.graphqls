@@ -295,6 +295,12 @@ type StageSentence {
   practices: [ID!]
   use_cases: [ID!]
 }
+type StageGrapheme {
+  grapheme: String!
+  ref_ID: ID
+  practices: [ID!]
+  use_cases: [ID!]
+}
 type StagePart implements Node {
   id: ID!
   type: StagePartType!
@@ -303,6 +309,7 @@ type StagePart implements Node {
   documentation: StageDocumentationPart
   words: [StageWord!]
   sentences: [StageSentence!]
+  graphemes: [StageGrapheme!]
 }
 type StagePartConnection implements Connection {
   pageInfo: PageInfo!
@@ -358,6 +365,7 @@ type StoryPart {
   pictureId: ID
   audioId: ID
   ssml: String
+  character: String
 }
 type StoryDetails implements MaterialDetails {
   type: MaterialType!
@@ -591,9 +599,10 @@ enum StageStatus {
 }
 enum StagePartType {
   DOCUMENTATION
-  TASK
+  TEST
   WORDS
   SENTENCES
+  GRAPHEMES
 }
 enum MaterialType {
   STORY

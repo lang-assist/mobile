@@ -387,7 +387,7 @@ class __StageCardState extends State<_StageCard> {
                   children: [
                     Text(e.explanation),
                     switch (e.type) {
-                      Enum$StagePartType.TASK => _buildMaterial(
+                      Enum$StagePartType.TEST => _buildMaterial(
                         e.material!.material_ID,
                       ),
                       Enum$StagePartType.WORDS => StageWordsPart(part: e),

@@ -45,6 +45,7 @@ export './src/graphql/fragments.gql.dart'
         Fragment$QuizPreludeItem,
         Fragment$QuizQuestion,
         Fragment$Stage,
+        Fragment$StageGrapheme,
         Fragment$StagePart,
         Fragment$StagePartDocumentation,
         Fragment$StagePartMaterial,

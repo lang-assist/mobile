@@ -75,6 +75,12 @@ fragment StageWord on StageWord {
   practices
   use_cases
 }
+fragment StageGrapheme on StageGrapheme {
+  grapheme
+  ref_ID
+  practices
+  use_cases
+}
 
 fragment StagePart on StagePart {
   id
@@ -91,6 +97,9 @@ fragment StagePart on StagePart {
   }
   words {
     ...StageWord
+  }
+  graphemes {
+    ...StageGrapheme
   }
 }
 
@@ -186,6 +195,7 @@ fragment DetailedMaterial on Material {
 fragment StoryPart on StoryPart {
   type
   ssml
+  character
   hasPicture
   question {
     ...QuizQuestion

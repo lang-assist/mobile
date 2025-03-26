@@ -3990,6 +3990,7 @@ const documentNodeQueryGetStageDetailed = DocumentNode(definitions: [
   fragmentDefinitionStagePartDocumentation,
   fragmentDefinitionStageSentence,
   fragmentDefinitionStageWord,
+  fragmentDefinitionStageGrapheme,
 ]);
 Query$GetStageDetailed _parserFn$Query$GetStageDetailed(
         Map<String, dynamic> data) =>
