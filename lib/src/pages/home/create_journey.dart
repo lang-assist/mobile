@@ -358,6 +358,16 @@ class _CreateJourneyPageState extends State<CreateJourneyPage>
                 "You can't read ${to.value!.name} ?",
                 style: typo.hint.bodyMedium,
               ),
+
+              AppTextFormField(
+                label: "Description",
+                signal: description,
+                maxLines: 3,
+                minLines: 2,
+                hint:
+                    "Please describe what you understand about this sentence in ${to.value!.name} or ${from.value!.name}.",
+              ),
+
               AppButton(
                 isGroupActive: submitGroupActive,
                 onPressed: (pr) async {
